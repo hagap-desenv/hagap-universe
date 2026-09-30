@@ -26,6 +26,12 @@ apenas dentro do lote aprovado da mudança ativa (`changes/<ativa>/tasks.md`).
   Nunca `hom → main`; nunca um commit do `dev` que não foi validado.
 - Proibido: commit, merge ou PR com código novo em `hom` ou `main`; diferenças entre ambientes no
   código (usar só variáveis de ambiente). Promover para `main` exige aprovação humana explícita.
+- **Enforcement obrigatório** (GitHub Free não protege branch privado):
+  - Hook `.githooks/pre-push`, ativado por `npm install` (script `prepare`): bloqueia commit fora do
+    `dev`, push não fast-forward, apagar `hom`/`main` e `main` sem tag `hom-validado-*`.
+  - Workflow `branch-guard`: fica vermelho se a regra for violada no GitHub.
+  - **Proibido** desativar o hook, usar `git push --no-verify` ou alterar `core.hooksPath`.
+    `branch-guard` vermelho → parar e avisar o humano.
 
 ```
 dev ──(fast-forward para SHA X)──► hom ──► validação (dados fictícios)
