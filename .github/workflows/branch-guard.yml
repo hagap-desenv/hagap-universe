@@ -1,0 +1,30 @@
+name: Branch guard
+
+# Regra canónica (AGENTS.md): hom/main só recebem commits que já existem em dev;
+# main exige a tag hom-validado-* no commit. Violação = workflow vermelho.
+
+on:
+  push:
+    branches: [hom, main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Commit existe em dev
+        run: |
+          git fetch origin dev --tags
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/dev; then
+            echo "::error::$GITHUB_SHA não existe em dev. Código só se escreve em dev."
+            exit 1
+          fi
+      - name: main exige tag hom-validado-*
+        if: github.ref_name == 'main'
+        run: |
+          if ! git tag --points-at "$GITHUB_SHA" | grep -q '^hom-validado-'; then
+            echo "::error::main só recebe commit com tag hom-validado-YYYY-MM-DD."
+            exit 1
+          fi

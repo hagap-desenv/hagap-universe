@@ -1,0 +1,37 @@
+#!/bin/sh
+# Regra canónica (AGENTS.md): código só em dev; hom/main só avançam por fast-forward
+# para um commit que já existe em dev; main exige a tag hom-validado-* nesse commit.
+
+zero=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/hom|refs/heads/main) ;;
+    *) continue ;;
+  esac
+  branch=${remote_ref#refs/heads/}
+
+  if [ "$local_sha" = "$zero" ]; then
+    echo "BLOQUEADO: apagar '$branch' é proibido." >&2
+    exit 1
+  fi
+
+  git fetch -q origin dev || { echo "BLOQUEADO: não foi possível ler origin/dev." >&2; exit 1; }
+
+  if ! git merge-base --is-ancestor "$local_sha" origin/dev; then
+    echo "BLOQUEADO: $local_sha não existe em dev. Código só se escreve em dev." >&2
+    exit 1
+  fi
+
+  if [ "$remote_sha" != "$zero" ] && ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
+    echo "BLOQUEADO: '$branch' só avança por fast-forward." >&2
+    exit 1
+  fi
+
+  if [ "$branch" = "main" ] && ! git tag --points-at "$local_sha" | grep -q '^hom-validado-'; then
+    echo "BLOQUEADO: main só recebe commit com tag hom-validado-YYYY-MM-DD (validado em hom)." >&2
+    exit 1
+  fi
+done
+
+exit 0
