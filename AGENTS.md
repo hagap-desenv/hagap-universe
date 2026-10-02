@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # PAI Cuidado — cérebro do projeto
 
 Este repositório contém só o código. O cérebro do projeto (regras, contexto, workers, specs,
-mudanças e handoff entre IAs) vive em `G:\Meu Drive\CDEV\HAGAP\Pai\AGENTS.md`.
+mudanças e handoff entre IAs) vive no cérebro Hagap Universe: `G:\Meu Drive\CDEV\HAGAP\Universo\AGENTS.md`.
 Antes de qualquer trabalho, ler esse `AGENTS.md` e `memory/handoff.md` dessa pasta, e trabalhar
 apenas dentro do lote aprovado da mudança ativa (`changes/<ativa>/tasks.md`).
 
