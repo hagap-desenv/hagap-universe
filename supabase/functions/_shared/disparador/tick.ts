@@ -7,6 +7,8 @@ export type DispatchableInstance = { id: string; name: string };
 export type ClaimedMessage = { id: string; recipient_e164: string; body: string };
 
 export interface TickRepo {
+  // sending antigo → failed/unknown_outcome (nunca reenvia); devolve quantas
+  reapStuckSending(): Promise<number>;
   listDispatchableInstances(): Promise<DispatchableInstance[]>;
   setInstanceStatus(instanceId: string, status: InstanceStatus): Promise<void>;
   claimNext(instanceId: string): Promise<ClaimedMessage | null>;
@@ -38,6 +40,17 @@ export async function runTick(
   options: TickOptions = {},
 ): Promise<TickSummary> {
   const timeoutMs = options.timeoutMs ?? SEND_TIMEOUT_MS;
+
+  // 0) Varredura de presos em sending: falha aqui não impede o envio deste tick
+  let reaped = 0;
+  let reapErrors = 0;
+  try {
+    reaped = await repo.reapStuckSending();
+  } catch (error) {
+    reapErrors = 1;
+    console.error(`disparador-tick: varredura falhou (${errorLabel(error)})`);
+  }
+
   const listed = await repo.listDispatchableInstances();
   const instances = [...new Map(listed.map((i) => [i.id, i])).values()];
 
@@ -57,8 +70,8 @@ export async function runTick(
     disconnected: 0,
     connecting: 0,
     idle: 0,
-    errors: 0,
-    reaped: 0,
+    errors: reapErrors,
+    reaped,
   };
   for (const outcome of outcomes) summary[outcome]++;
   return summary;

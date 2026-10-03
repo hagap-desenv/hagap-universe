@@ -11,6 +11,10 @@ function firstRow(data: unknown): Record<string, unknown> | null {
 
 export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo & WebhookRepo {
   return {
+    async reapStuckSending(): Promise<number> {
+      const count = await rpc("reap_stuck_sending");
+      return typeof count === "number" ? count : 0;
+    },
     async listDispatchableInstances(): Promise<DispatchableInstance[]> {
       const rows = (await rpc("list_dispatchable_instances")) as
         | { instance_id: string; instance_name: string }[]
