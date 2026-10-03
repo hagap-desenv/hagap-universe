@@ -421,3 +421,7 @@ verify_jwt = false
 # Disparador: autenticação pela chave da instância (x-disparador-key), não por JWT
 [functions.disparador-webhook]
 verify_jwt = false
+
+# Disparador: QR pelo app. JWT do usuário validado no gateway e de novo no banco (connect_target)
+[functions.disparador-instance-connect]
+verify_jwt = true

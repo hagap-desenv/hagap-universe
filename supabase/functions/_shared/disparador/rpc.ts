@@ -15,6 +15,8 @@ export type RpcOptions = {
   serviceKey: string;
   schema?: string;
   fetch?: typeof fetch;
+  // JWT do usuário (chamadas com RLS/auth.uid()); por omissão, a própria serviceKey
+  bearer?: string;
 };
 
 export function createRpcClient(options: RpcOptions): RpcClient {
@@ -30,7 +32,7 @@ export function createRpcClient(options: RpcOptions): RpcClient {
       method: "POST",
       headers: {
         "apikey": options.serviceKey,
-        "Authorization": `Bearer ${options.serviceKey}`,
+        "Authorization": `Bearer ${options.bearer ?? options.serviceKey}`,
         "Content-Type": "application/json",
         "Content-Profile": schema,
         "Accept-Profile": schema,
