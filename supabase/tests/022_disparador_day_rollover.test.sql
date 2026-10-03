@@ -26,9 +26,9 @@ insert into disparador.instances (id, tenant_id, name, phone_e164, status, daily
    'open', 2, now() - interval '1 minute');
 -- Ontem (dia local de cada igreja) no cap
 insert into disparador.daily_usage (instance_id, day, sent)
-  select '4c000000-0000-0000-0000-00000000000a', (now() at time zone tz_west)::date - 1, 2 from q7_tz
+  select '4c000000-0000-0000-0000-00000000000a'::uuid, (now() at time zone tz_west)::date - 1, 2 from q7_tz
   union all
-  select '4c000000-0000-0000-0000-00000000000b', (now() at time zone tz_east)::date - 1, 2 from q7_tz;
+  select '4c000000-0000-0000-0000-00000000000b'::uuid, (now() at time zone tz_east)::date - 1, 2 from q7_tz;
 insert into disparador.outbound_messages (id, tenant_id, instance_id, product, recipient_e164, recipient_name, body) values
   ('6c000000-0000-0000-0000-000000000001', '2c000000-0000-0000-0000-00000000000a', '4c000000-0000-0000-0000-00000000000a',
    'pai', '+5511979900001', 'Oeste', 'Olá Oeste'),
