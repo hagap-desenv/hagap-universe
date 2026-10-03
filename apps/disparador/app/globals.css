@@ -1,0 +1,22 @@
+/* Estilos específicos do Disparador. Base e tokens vêm de @hagap/core (tokens.css + ui.css). */
+.dp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hg-space-3);
+  align-items: center;
+}
+
+.dp-usage {
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-qr {
+  max-width: 18rem;
+  border: 1px solid var(--hg-border-subtle);
+  border-radius: var(--hg-radius);
+}
+
+.dp-templates {
+  display: grid;
+  gap: var(--hg-space-3);
+}
