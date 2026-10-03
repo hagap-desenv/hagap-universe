@@ -17,6 +17,7 @@ export function NewInstanceForm() {
           id="instance-name"
           name="name"
           required
+          defaultValue={state?.values?.name?.[0]}
           pattern="[a-z0-9]+(-[a-z0-9]+)*"
           aria-describedby="instance-name-hint"
         />
@@ -27,6 +28,7 @@ export function NewInstanceForm() {
         <input
           id="instance-phone"
           name="phone"
+          defaultValue={state?.values?.phone?.[0]}
           type="tel"
           required
           placeholder="+5511999990000"
@@ -42,7 +44,7 @@ export function NewInstanceForm() {
           type="number"
           min={1}
           max={50}
-          defaultValue={30}
+          defaultValue={state?.values?.daily_cap?.[0] ?? 30}
           required
           aria-describedby="instance-cap-hint"
         />

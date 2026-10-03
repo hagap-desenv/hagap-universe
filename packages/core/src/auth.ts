@@ -8,7 +8,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createServerSupabase } from "./supabase/server";
 import { safeRedirectPath } from "./tenant";
 
-export type FormState = { error?: string; message?: string } | undefined;
+export type FormState = { error?: string; message?: string; email?: string } | undefined;
 
 const field = (formData: FormData, name: string) => String(formData.get(name) ?? "").trim();
 
@@ -19,7 +19,7 @@ export async function signInWithPassword(formData: FormData): Promise<FormState>
 
   const supabase = await createServerSupabase();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "E-mail ou senha inválidos." };
+  if (error) return { error: "E-mail ou senha inválidos.", email };
 
   redirect(safeRedirectPath(formData.get("next")));
 }

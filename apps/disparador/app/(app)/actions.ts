@@ -10,7 +10,17 @@ import { access, TENANT_COOKIE } from "@/lib/access";
 import { E164, INSTANCE_NAME, type InstanceStatus } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-export type ActionState = { error?: string; message?: string } | undefined;
+export type ActionState = { error?: string; message?: string; values?: Record<string, string[]> } | undefined;
+
+// Em erro, devolve o que foi digitado (o React 19 limpa o formulário após a action)
+function keepValues(formData: FormData, state: ActionState): ActionState {
+  if (!state?.error) return state;
+  const values: Record<string, string[]> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string" && !key.startsWith("$")) (values[key] ??= []).push(value);
+  }
+  return { ...state, values };
+}
 
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "").trim();
 
@@ -26,6 +36,10 @@ export async function signOutAction(): Promise<void> {
 
 // ===== Instâncias (só admin) =====
 export async function createInstanceAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  return keepValues(formData, await createInstance(formData));
+}
+
+async function createInstance(formData: FormData): Promise<ActionState> {
   const { active } = await access.requirePermission("instancias.manage");
   const name = text(formData, "name").toLowerCase();
   const phone = text(formData, "phone").replace(/[\s()-]/g, "");
@@ -100,6 +114,10 @@ export async function connectInstanceAction(_state: ConnectState, formData: Form
 
 // ===== Contatos (admin/coordenador) =====
 export async function addContactAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  return keepValues(formData, await addContact(formData));
+}
+
+async function addContact(formData: FormData): Promise<ActionState> {
   const { active } = await access.requirePermission("contatos.manage");
   const name = text(formData, "name");
   const phone = text(formData, "phone").replace(/[\s()-]/g, "");
@@ -142,6 +160,10 @@ export async function setContactConsentAction(formData: FormData): Promise<void>
 
 // ===== Grupos de variações (admin/coordenador): ≥ 3 variações com {nome} =====
 export async function createVariantGroupAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  return keepValues(formData, await createVariantGroup(formData));
+}
+
+async function createVariantGroup(formData: FormData): Promise<ActionState> {
   const { active } = await access.requirePermission("variacoes.manage");
   const name = text(formData, "name");
   const templates = formData

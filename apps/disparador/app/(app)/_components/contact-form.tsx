@@ -18,14 +18,17 @@ export function ContactForm() {
       ) : null}
       <div className="hg-field">
         <label htmlFor="contact-name">Nome</label>
-        <input id="contact-name" name="name" required autoComplete="off" />
+        <input id="contact-name" name="name" required autoComplete="off" defaultValue={state?.values?.name?.[0]} />
       </div>
       <div className="hg-field">
         <label htmlFor="contact-phone">Número (formato internacional)</label>
-        <input id="contact-phone" name="phone" type="tel" required placeholder="+5511999990000" autoComplete="off" />
+        <input id="contact-phone" name="phone" type="tel" required placeholder="+5511999990000"
+          autoComplete="off"
+          defaultValue={state?.values?.phone?.[0]}
+        />
       </div>
       <div className="hg-checkbox">
-        <input id="contact-optin" name="opt_in" type="checkbox" />
+        <input id="contact-optin" name="opt_in" type="checkbox" defaultChecked={state?.values?.opt_in?.[0] === "on"} />
         <label htmlFor="contact-optin">A pessoa autorizou receber mensagens (opt-in registrado)</label>
       </div>
       <div>

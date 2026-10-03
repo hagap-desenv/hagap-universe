@@ -39,7 +39,7 @@ export function LoginForm({ action, next, notice }: { action: Action; next?: str
       <input type="hidden" name="next" value={next ?? "/"} />
       <div className="hg-field">
         <label htmlFor="email">E-mail</label>
-        <input id="email" name="email" type="email" autoComplete="email" required />
+        <input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} />
       </div>
       <div className="hg-field">
         <label htmlFor="password">Senha</label>

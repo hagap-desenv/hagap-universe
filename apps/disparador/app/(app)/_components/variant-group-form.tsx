@@ -20,7 +20,7 @@ export function VariantGroupForm() {
       ) : null}
       <div className="hg-field">
         <label htmlFor="group-name">Nome do grupo</label>
-        <input id="group-name" name="name" required />
+        <input id="group-name" name="name" required defaultValue={state?.values?.name?.[0]} />
       </div>
       <fieldset className="dp-templates">
         <legend>Variações (mínimo 3, todas com {"{nome}"})</legend>
@@ -30,7 +30,13 @@ export function VariantGroupForm() {
               Variação {n}
               {n <= 3 ? " (obrigatória)" : " (opcional)"}
             </label>
-            <textarea id={`template-${n}`} name="template" rows={2} required={n <= 3} />
+            <textarea
+              id={`template-${n}`}
+              name="template"
+              rows={2}
+              required={n <= 3}
+              defaultValue={state?.values?.template?.[n - 1]}
+            />
           </div>
         ))}
       </fieldset>
