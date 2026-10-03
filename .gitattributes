@@ -2,3 +2,5 @@
 *.sh text eol=lf
 *.yml text eol=lf
 Dockerfile text eol=lf
+supabase/functions/** text eol=lf
+supabase/**/*.sql text eol=lf
