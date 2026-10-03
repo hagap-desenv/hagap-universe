@@ -9,7 +9,11 @@ function firstRow(data: unknown): Record<string, unknown> | null {
   return row && typeof row === "object" ? row as Record<string, unknown> : null;
 }
 
-export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo & WebhookRepo {
+export type DisparadorRepo = TickRepo & HeartbeatRepo & WebhookRepo & {
+  setWebhookKeyHash(instanceId: string, hash: string): Promise<void>;
+};
+
+export function createDisparadorRepo(rpc: RpcClient): DisparadorRepo {
   return {
     async reapStuckSending(): Promise<number> {
       const count = await rpc("reap_stuck_sending");
@@ -20,6 +24,9 @@ export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo &
         | { instance_id: string; instance_name: string }[]
         | null;
       return (rows ?? []).map((r) => ({ id: r.instance_id, name: r.instance_name }));
+    },
+    async setWebhookKeyHash(instanceId: string, hash: string): Promise<void> {
+      await rpc("set_webhook_key_hash", { p_instance_id: instanceId, p_hash: hash });
     },
     async setInstanceStatus(instanceId: string, status: InstanceStatus): Promise<void> {
       await rpc("set_instance_status", { p_instance_id: instanceId, p_status: status });

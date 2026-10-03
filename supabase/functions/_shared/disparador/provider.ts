@@ -3,11 +3,14 @@
 
 export type ConnectionState = "open" | "connecting" | "close";
 
+// Provisionamento no fluxo de conexão: webhook da instância aponta para disparador-webhook com a chave nova
+export type ConnectOptions = { webhookUrl: string; webhookKey: string };
+
 export interface MessagingProvider {
   readonly name: string;
   connectionState(instance: string): Promise<ConnectionState>;
   sendText(instance: string, toE164: string, body: string): Promise<{ providerMessageId: string }>;
-  connect(instance: string): Promise<{ qrCode?: string }>;
+  connect(instance: string, opts: ConnectOptions): Promise<{ qrCode?: string }>;
 }
 
 export type EnvGetter = (key: string) => string | undefined;

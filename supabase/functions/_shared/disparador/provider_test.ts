@@ -31,10 +31,12 @@ Deno.test("getProvider: valor desconhecido é erro (não cai no fake)", () => {
 Deno.test("FakeProvider: estados controláveis e QR ao conectar", async () => {
   const fake = new FakeProvider("close");
   assertEquals(await fake.connectionState("x"), "close");
-  assertEquals((await fake.connect("x")).qrCode, "fake-qr:x");
+  const opts = { webhookUrl: "https://edge.teste.invalid/w?instance=x", webhookKey: "dk_teste" };
+  assertEquals((await fake.connect("x", opts)).qrCode, "fake-qr:x");
+  assertEquals(fake.webhooks.get("x"), opts);
   assertEquals(await fake.connectionState("x"), "connecting");
   fake.setState("x", "open");
-  assertEquals(await fake.connect("x"), {});
+  assertEquals(await fake.connect("x", opts), {});
   const sent = await fake.sendText("x", "+5511900000001", "Olá Um");
   assertEquals(fake.sent[0].providerMessageId, sent.providerMessageId);
 });

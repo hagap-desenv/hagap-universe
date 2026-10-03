@@ -14,8 +14,13 @@ export type ConnectAuthorizer = (
 
 export type ConnectDeps = {
   authorize: ConnectAuthorizer;
-  repo: { setInstanceStatus(id: string, status: InstanceStatus): Promise<void> };
+  repo: {
+    setInstanceStatus(id: string, status: InstanceStatus): Promise<void>;
+    setWebhookKeyHash(id: string, hash: string): Promise<void>;
+  };
   provider: () => MessagingProvider;
+  // Base pública do Supabase (SUPABASE_URL) para montar a URL do disparador-webhook
+  webhookBaseUrl: string;
   timeoutMs?: number;
 };
 
@@ -76,7 +81,10 @@ export function createConnectHandler(deps: ConnectDeps): (req: Request) => Promi
     let qrCode: string | undefined;
     try {
       const provider = deps.provider();
-      const result = await withTimeout(provider.connect(decision.instanceName), timeoutMs);
+      const result = await withTimeout(
+        provider.connect(decision.instanceName, { webhookUrl: "", webhookKey: "" }),
+        timeoutMs,
+      );
       if (result.qrCode) {
         status = "connecting";
         qrCode = result.qrCode;

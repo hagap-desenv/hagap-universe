@@ -21,4 +21,6 @@ Deno.serve(createConnectHandler({
     createRpcClient({ url, serviceKey: env("SUPABASE_SERVICE_ROLE_KEY") ?? "" }),
   ),
   provider: () => getProvider(env, defaultProviderFactories),
+  // URL do disparador-webhook configurada na Evolution a cada conexão (chave rotacionada)
+  webhookBaseUrl: url,
 }));

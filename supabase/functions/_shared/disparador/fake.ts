@@ -1,5 +1,5 @@
 // FakeProvider: adaptador em memória com estados controláveis (testes e HOM sem Evolution).
-import type { ConnectionState, MessagingProvider } from "./provider.ts";
+import type { ConnectionState, ConnectOptions, MessagingProvider } from "./provider.ts";
 
 export type FakeSent = {
   instance: string;
@@ -12,6 +12,8 @@ export class FakeProvider implements MessagingProvider {
   readonly name = "fake";
   readonly sent: FakeSent[] = [];
   readonly healthChecks: string[] = [];
+  // Último webhook configurado por instância (provisionamento no connect)
+  readonly webhooks = new Map<string, ConnectOptions>();
   private states = new Map<string, ConnectionState>();
   private sendFailures = new Map<string, Error>();
   private hanging = new Set<string>();
@@ -59,7 +61,8 @@ export class FakeProvider implements MessagingProvider {
     return Promise.resolve({ providerMessageId });
   }
 
-  connect(instance: string): Promise<{ qrCode?: string }> {
+  connect(instance: string, opts: ConnectOptions): Promise<{ qrCode?: string }> {
+    this.webhooks.set(instance, { ...opts });
     if ((this.states.get(instance) ?? this.defaultState) === "open") return Promise.resolve({});
     this.states.set(instance, "connecting");
     return Promise.resolve({ qrCode: `fake-qr:${instance}` });

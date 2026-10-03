@@ -1,6 +1,6 @@
 // EvolutionProvider: adaptador HTTP REST da Evolution API v2 (sem SDK).
 // Timeout 10s por chamada (AbortController), sem retry. Credenciais só por env.
-import type { ConnectionState, EnvGetter, MessagingProvider } from "./provider.ts";
+import type { ConnectionState, ConnectOptions, EnvGetter, MessagingProvider } from "./provider.ts";
 import { TimeoutError } from "./timeout.ts";
 
 export const EVOLUTION_TIMEOUT_MS = 10_000;
@@ -55,7 +55,7 @@ export class EvolutionProvider implements MessagingProvider {
     return { providerMessageId: id };
   }
 
-  async connect(instance: string): Promise<{ qrCode?: string }> {
+  async connect(instance: string, _opts: ConnectOptions): Promise<{ qrCode?: string }> {
     const data = await this.request("connect", "GET", `/instance/connect/${enc(instance)}`);
     const qr = data.base64 ?? data.code;
     return typeof qr === "string" && qr !== "" ? { qrCode: qr } : {};

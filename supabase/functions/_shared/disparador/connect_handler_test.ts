@@ -1,4 +1,5 @@
-import { assert, assertEquals, assertFalse } from "@std/assert";
+import { assert, assertEquals, assertFalse, assertMatch, assertNotEquals } from "@std/assert";
+import { sha256Hex } from "./auth.ts";
 import {
   type ConnectAuthorizer,
   createConnectHandler,
@@ -11,10 +12,22 @@ import type { InstanceStatus } from "./tick.ts";
 const INSTANCE_ID = "45000000-0000-0000-0000-00000000000a";
 const TOKEN = "jwt-do-usuario-ficticio";
 
+const BASE = "https://supabase.teste.invalid";
+
 class StatusRepo {
   updates: { id: string; status: InstanceStatus }[] = [];
+  hashes: { id: string; hash: string }[] = [];
+  events: string[] = [];
+  failHash = false;
   setInstanceStatus(id: string, status: InstanceStatus): Promise<void> {
+    this.events.push("status");
     this.updates.push({ id, status });
+    return Promise.resolve();
+  }
+  setWebhookKeyHash(id: string, hash: string): Promise<void> {
+    this.events.push("hash");
+    if (this.failHash) return Promise.reject(new Error("db indisponível"));
+    this.hashes.push({ id, hash });
     return Promise.resolve();
   }
 }
@@ -34,6 +47,7 @@ const post = (
 Deno.test("connect: sem Authorization → 401 e nada é chamado", async () => {
   let authorized = 0;
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: () => {
       authorized++;
       return allow(TOKEN, INSTANCE_ID);
@@ -49,6 +63,7 @@ Deno.test("connect: sem Authorization → 401 e nada é chamado", async () => {
 
 Deno.test("connect: só POST", async () => {
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo: new StatusRepo(),
     provider: () => new FakeProvider(),
@@ -60,6 +75,7 @@ Deno.test("connect: só POST", async () => {
 
 Deno.test("connect: instance_id inválido → 400", async () => {
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo: new StatusRepo(),
     provider: () => new FakeProvider(),
@@ -74,6 +90,7 @@ Deno.test("connect: não-admin ou outra igreja → 403 e o provedor não é cham
   const repo = new StatusRepo();
   let receivedToken = "";
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: (token) => {
       receivedToken = token;
       return Promise.resolve({ ok: false, status: 403 });
@@ -85,12 +102,15 @@ Deno.test("connect: não-admin ou outra igreja → 403 e o provedor não é cham
   assertEquals(res.status, 403);
   assertEquals(receivedToken, TOKEN, "a autorização usa o JWT do próprio usuário");
   assertEquals(provider.healthChecks.length, 0);
+  assertEquals(provider.webhooks.size, 0);
   assertEquals(repo.updates.length, 0);
+  assertEquals(repo.hashes.length, 0);
   await res.body?.cancel();
 });
 
 Deno.test("connect: JWT inválido/expirado → 401", async () => {
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: () => Promise.resolve({ ok: false, status: 401 }),
     repo: new StatusRepo(),
     provider: () => new FakeProvider("close"),
@@ -103,6 +123,7 @@ Deno.test("connect: JWT inválido/expirado → 401", async () => {
 Deno.test("connect: instância desligada → QR devolvido e estado 'connecting'", async () => {
   const repo = new StatusRepo();
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo,
     provider: () => new FakeProvider("close"),
@@ -116,6 +137,7 @@ Deno.test("connect: instância desligada → QR devolvido e estado 'connecting'"
 Deno.test("connect: instância já conectada → 'open' sem QR", async () => {
   const repo = new StatusRepo();
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo,
     provider: () => new FakeProvider("open"),
@@ -135,6 +157,7 @@ Deno.test("connect: provedor que não responde → 502 por timeout, estado intac
     connect: () => new Promise(() => {}),
   };
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo,
     provider: () => hanging,
@@ -154,6 +177,7 @@ Deno.test("connect: erro do provedor nunca vaza segredos na resposta", async () 
     connect: () => Promise.reject(new Error("apikey=SEGREDO-FICTICIO http://evolution.interna")),
   };
   const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
     authorize: allow,
     repo: new StatusRepo(),
     provider: () => leaky,
@@ -163,6 +187,97 @@ Deno.test("connect: erro do provedor nunca vaza segredos na resposta", async () 
   assertEquals(res.status, 502);
   assertFalse(text.includes("SEGREDO"));
   assertFalse(text.includes("evolution.interna"));
+});
+
+Deno.test("connect: gera chave nova, grava só o hash e provisiona o webhook", async () => {
+  const repo = new StatusRepo();
+  const provider = new FakeProvider("close");
+  const handler = createConnectHandler({
+    webhookBaseUrl: `${BASE}/`,
+    authorize: allow,
+    repo,
+    provider: () => provider,
+  });
+
+  const res = await handler(post({ instance_id: INSTANCE_ID }));
+  const text = await res.text();
+
+  assertEquals(res.status, 200);
+  const webhook = provider.webhooks.get("inst-a");
+  assert(webhook);
+  assertMatch(webhook.webhookKey, /^dk_[0-9a-f]{64}$/);
+  assertEquals(webhook.webhookUrl, `${BASE}/functions/v1/disparador-webhook?instance=inst-a`);
+  assertEquals(repo.hashes, [{ id: INSTANCE_ID, hash: await sha256Hex(webhook.webhookKey) }]);
+  assertEquals(repo.events, ["hash", "status"], "hash gravado antes de configurar o provedor");
+  assertFalse(text.includes(webhook.webhookKey), "a chave em texto nunca vai ao navegador");
+});
+
+Deno.test("connect: cada reconexão rotaciona a chave", async () => {
+  const repo = new StatusRepo();
+  const provider = new FakeProvider("close");
+  const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
+    authorize: allow,
+    repo,
+    provider: () => provider,
+  });
+
+  await (await handler(post({ instance_id: INSTANCE_ID }))).body?.cancel();
+  const first = provider.webhooks.get("inst-a")?.webhookKey;
+  await (await handler(post({ instance_id: INSTANCE_ID }))).body?.cancel();
+  const second = provider.webhooks.get("inst-a")?.webhookKey;
+
+  assertNotEquals(first, second);
+  assertEquals(repo.hashes.length, 2);
+  assertNotEquals(repo.hashes[0].hash, repo.hashes[1].hash);
+});
+
+Deno.test("connect: nome da instância vai codificado na URL do webhook", async () => {
+  const provider = new FakeProvider("close");
+  const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
+    authorize: () => Promise.resolve({ ok: true, instanceName: "igreja a&b" }),
+    repo: new StatusRepo(),
+    provider: () => provider,
+  });
+  await (await handler(post({ instance_id: INSTANCE_ID }))).body?.cancel();
+  assertEquals(
+    provider.webhooks.get("igreja a&b")?.webhookUrl,
+    `${BASE}/functions/v1/disparador-webhook?instance=igreja%20a%26b`,
+  );
+});
+
+Deno.test("connect: falha ao gravar o hash → 500 e o provedor não é chamado", async () => {
+  const repo = new StatusRepo();
+  repo.failHash = true;
+  const provider = new FakeProvider("close");
+  const handler = createConnectHandler({
+    webhookBaseUrl: BASE,
+    authorize: allow,
+    repo,
+    provider: () => provider,
+  });
+  const res = await handler(post({ instance_id: INSTANCE_ID }));
+  assertEquals(res.status, 500);
+  assertEquals(provider.webhooks.size, 0);
+  assertEquals(repo.updates.length, 0);
+  await res.body?.cancel();
+});
+
+Deno.test("connect: sem SUPABASE_URL → 500 (falha fechada), nada rotacionado", async () => {
+  const repo = new StatusRepo();
+  const provider = new FakeProvider("close");
+  const handler = createConnectHandler({
+    webhookBaseUrl: "",
+    authorize: allow,
+    repo,
+    provider: () => provider,
+  });
+  const res = await handler(post({ instance_id: INSTANCE_ID }));
+  assertEquals(res.status, 500);
+  assertEquals(repo.hashes.length, 0);
+  assertEquals(provider.webhooks.size, 0);
+  await res.body?.cancel();
 });
 
 type Call = { url: string; init: RequestInit };

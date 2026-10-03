@@ -1,0 +1,12 @@
+{
+  "id": "cmfakewebhook000000000001",
+  "url": "https://edge.teste.invalid/functions/v1/disparador-webhook?instance=inst-nova",
+  "headers": { "x-disparador-key": "dk_ficticio" },
+  "enabled": true,
+  "events": ["MESSAGES_UPSERT"],
+  "webhookByEvents": false,
+  "webhookBase64": false,
+  "createdAt": "2026-10-03T18:00:00.000Z",
+  "updatedAt": "2026-10-03T18:00:00.000Z",
+  "instanceId": "00000000-0000-4000-8000-000000000e01"
+}

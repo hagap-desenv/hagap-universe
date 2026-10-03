@@ -1,0 +1,32 @@
+{
+  "instance": {
+    "instanceName": "inst-nova",
+    "instanceId": "00000000-0000-4000-8000-000000000e01",
+    "integration": "WHATSAPP-BAILEYS",
+    "webhookWaBusiness": null,
+    "accessTokenWaBusiness": "",
+    "status": "connecting"
+  },
+  "hash": "HASH-FICTICIO-DA-INSTANCIA",
+  "webhook": {},
+  "websocket": {},
+  "rabbitmq": {},
+  "nats": {},
+  "sqs": {},
+  "settings": {
+    "rejectCall": false,
+    "msgCall": "",
+    "groupsIgnore": false,
+    "alwaysOnline": false,
+    "readMessages": false,
+    "readStatus": false,
+    "syncFullHistory": false,
+    "wavoipToken": ""
+  },
+  "qrcode": {
+    "pairingCode": null,
+    "code": "2@qr-ficticio-create",
+    "base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==",
+    "count": 1
+  }
+}
