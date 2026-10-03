@@ -1,0 +1,5 @@
+{
+  "status": 404,
+  "error": "Not Found",
+  "response": { "message": ["The \"inst-inexistente\" instance does not exist"] }
+}
