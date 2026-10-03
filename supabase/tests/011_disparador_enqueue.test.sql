@@ -84,7 +84,7 @@ select throws_ok(
 select throws_ok(
   $$ select disparador.enqueue_message('41000000-0000-0000-0000-00000000000a', '+5511960000003', 'Caio Saiu', 'campanha',
        null, '31000000-0000-0000-0000-000000000003', '51000000-0000-0000-0000-00000000000a') $$,
-  'DS002', null, 'campanha para contato com opt-out é recusada');
+  'DS004', null, 'campanha para contato com opt-out é recusada (DS004)');
 
 -- Mentor não enfileira (só admin/coordenador da igreja ou service_role)
 set local role authenticated;

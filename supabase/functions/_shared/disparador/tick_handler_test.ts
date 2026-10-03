@@ -9,6 +9,9 @@ class Repo {
   heartbeats: { job: string; status: string; detail: Record<string, unknown> }[] = [];
   listed = 0;
   constructor(private queue: ClaimedMessage[] = [], private failList = false) {}
+  reapStuckSending(): Promise<number> {
+    return Promise.resolve(0);
+  }
   listDispatchableInstances(): Promise<DispatchableInstance[]> {
     this.listed++;
     if (this.failList) return Promise.reject(new Error("db indisponível"));

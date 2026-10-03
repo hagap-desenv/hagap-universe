@@ -21,8 +21,10 @@ export type TickSummary = {
   sent: number;
   failed: number;
   disconnected: number;
+  connecting: number;
   idle: number;
   errors: number;
+  reaped: number;
 };
 
 export const SEND_TIMEOUT_MS = 10_000;
@@ -53,8 +55,10 @@ export async function runTick(
     sent: 0,
     failed: 0,
     disconnected: 0,
+    connecting: 0,
     idle: 0,
     errors: 0,
+    reaped: 0,
   };
   for (const outcome of outcomes) summary[outcome]++;
   return summary;

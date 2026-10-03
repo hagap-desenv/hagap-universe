@@ -8,8 +8,13 @@ const factories = {
 };
 const envOf = (vars: Record<string, string>) => (key: string) => vars[key];
 
-Deno.test("getProvider: default é fake", () => {
-  assertEquals(getProvider(envOf({}), factories).name, "fake");
+Deno.test("getProvider: DISPARADOR_PROVIDER ausente ou vazio é erro (sem default)", () => {
+  assertThrows(() => getProvider(envOf({}), factories), Error, "DISPARADOR_PROVIDER");
+  assertThrows(() => getProvider(envOf({ DISPARADOR_PROVIDER: "  " }), factories), Error);
+});
+
+Deno.test("getProvider: fake só quando explícito", () => {
+  assertEquals(getProvider(envOf({ DISPARADOR_PROVIDER: "fake" }), factories).name, "fake");
 });
 
 Deno.test("getProvider: escolhe evolution por env", () => {

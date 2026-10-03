@@ -9,12 +9,19 @@ class MemoryRepo implements TickRepo {
   statuses = new Map<string, InstanceStatus>();
   sent = new Map<string, string>();
   failed = new Map<string, string>();
+  reaped = 0;
+  failReap = false;
 
   constructor(
     public instances: DispatchableInstance[],
     public queues: Record<string, ClaimedMessage[]>,
   ) {}
 
+  reapStuckSending(): Promise<number> {
+    this.events.push("reap");
+    if (this.failReap) return Promise.reject(new Error("db indisponível"));
+    return Promise.resolve(this.reaped);
+  }
   listDispatchableInstances(): Promise<DispatchableInstance[]> {
     this.events.push("list");
     return Promise.resolve(this.instances);
@@ -55,7 +62,7 @@ Deno.test("tick: health-check antes do claim e envio com sucesso → mark_sent",
   const summary = await runTick(repo, provider);
 
   assertEquals(provider.healthChecks, ["inst-a"]);
-  assertEquals(repo.events, ["list", "claim:inst-a-id", "sent:m1"]);
+  assertEquals(repo.events, ["reap", "list", "claim:inst-a-id", "sent:m1"]);
   assertEquals(provider.sent.length, 1);
   assertEquals(provider.sent[0].toE164, "+5511900000001");
   assertEquals(repo.sent.get("m1"), provider.sent[0].providerMessageId);
@@ -69,19 +76,21 @@ Deno.test("tick: instância fechada → marca disconnected e não reclama", asyn
 
   const summary = await runTick(repo, provider);
 
-  assertEquals(repo.events, ["list", "status:inst-a-id:disconnected"]);
+  assertEquals(repo.events, ["reap", "list", "status:inst-a-id:disconnected"]);
   assertEquals(provider.sent.length, 0);
   assertEquals(summary.disconnected, 1);
 });
 
-Deno.test("tick: instância a conectar (≠ open) → disconnected, sem claim", async () => {
+Deno.test("tick: instância a conectar é transitória → não marca disconnected nem reclama", async () => {
   const repo = new MemoryRepo([instA], { [instA.id]: [msg("m1", "1")] });
   const provider = new FakeProvider("connecting");
 
-  await runTick(repo, provider);
+  const summary = await runTick(repo, provider);
 
-  assertEquals(repo.statuses.get("inst-a-id"), "disconnected");
-  assertEquals(repo.events.includes("claim:inst-a-id"), false);
+  assertEquals(repo.statuses.has("inst-a-id"), false);
+  assertEquals(repo.events, ["reap", "list"]);
+  assertEquals(summary.connecting, 1);
+  assertEquals(summary.disconnected, 0);
 });
 
 Deno.test("tick: erro no health-check → não reclama nem muda estado", async () => {
@@ -91,7 +100,7 @@ Deno.test("tick: erro no health-check → não reclama nem muda estado", async (
 
   const summary = await runTick(repo, provider);
 
-  assertEquals(repo.events, ["list"]);
+  assertEquals(repo.events, ["reap", "list"]);
   assertEquals(summary.errors, 1);
 });
 
@@ -102,7 +111,7 @@ Deno.test("tick: health-check sem resposta → timeout, sem claim", async () => 
 
   const summary = await runTick(repo, provider, { timeoutMs: 20 });
 
-  assertEquals(repo.events, ["list"]);
+  assertEquals(repo.events, ["reap", "list"]);
   assertEquals(summary.errors, 1);
 });
 
@@ -113,7 +122,7 @@ Deno.test("tick: falha no envio → mark_failed, sem retry", async () => {
 
   const summary = await runTick(repo, provider);
 
-  assertEquals(repo.events, ["list", "claim:inst-a-id", "failed:m1"]);
+  assertEquals(repo.events, ["reap", "list", "claim:inst-a-id", "failed:m1"]);
   assertEquals(repo.failed.has("m1"), true);
   assertEquals(summary.failed, 1);
   assertEquals(summary.sent, 0);
@@ -126,7 +135,7 @@ Deno.test("tick: envio sem resposta → timeout → mark_failed, sem retry", asy
 
   const summary = await runTick(repo, provider, { timeoutMs: 20 });
 
-  assertEquals(repo.events, ["list", "claim:inst-a-id", "failed:m1"]);
+  assertEquals(repo.events, ["reap", "list", "claim:inst-a-id", "failed:m1"]);
   assertEquals(repo.failed.get("m1"), "timeout");
   assertEquals(summary.failed, 1);
 });
@@ -137,7 +146,7 @@ Deno.test("tick: claim vazio (janela/cap/intervalo) → nada enviado", async () 
 
   const summary = await runTick(repo, provider);
 
-  assertEquals(repo.events, ["list", "claim:inst-a-id"]);
+  assertEquals(repo.events, ["reap", "list", "claim:inst-a-id"]);
   assertEquals(provider.sent.length, 0);
   assertEquals(summary.idle, 1);
 });
@@ -167,5 +176,34 @@ Deno.test("tick: instâncias diferentes são tratadas de forma independente", as
 
   assertEquals(provider.sent.map((s) => s.instance), ["inst-a"]);
   assertEquals(repo.statuses.get("inst-b-id"), "disconnected");
-  assertEquals(summary, { instances: 2, sent: 1, failed: 0, disconnected: 1, idle: 0, errors: 0 });
+  assertEquals(summary, {
+    instances: 2,
+    sent: 1,
+    failed: 0,
+    disconnected: 1,
+    connecting: 0,
+    idle: 0,
+    errors: 0,
+    reaped: 0,
+  });
+});
+
+Deno.test("tick: varre mensagens presas em sending a cada execução, antes de enviar", async () => {
+  const repo = new MemoryRepo([], {});
+  repo.reaped = 2;
+
+  const summary = await runTick(repo, new FakeProvider("open"));
+
+  assertEquals(repo.events, ["reap", "list"]);
+  assertEquals(summary.reaped, 2);
+});
+
+Deno.test("tick: falha na varredura não impede o envio", async () => {
+  const repo = new MemoryRepo([instA], { [instA.id]: [msg("m1", "1")] });
+  repo.failReap = true;
+
+  const summary = await runTick(repo, new FakeProvider("open"));
+
+  assertEquals(summary.sent, 1);
+  assertEquals(summary.errors, 1);
 });
