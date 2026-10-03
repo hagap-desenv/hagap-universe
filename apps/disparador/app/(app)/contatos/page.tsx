@@ -69,9 +69,13 @@ export default async function ContactsPage() {
                 <td>{consent(c)}</td>
                 <PermissionGate permission="contatos.manage">
                   <td>
+                    {c.opted_out_at ? (
+                      // Opt-out (SAIR/PARAR) só é desfeito pela própria pessoa, nunca pela equipe
+                      <span className="hg-muted">Só a própria pessoa pode voltar a receber</span>
+                    ) : (
                     <form action={setContactConsentAction}>
                       <input type="hidden" name="contact_id" value={c.id} />
-                      {c.opted_in_at && !c.opted_out_at ? (
+                      {c.opted_in_at ? (
                         <button type="submit" name="consent" value="opt_out" className="hg-button hg-button--secondary">
                           Registrar opt-out<span className="hg-visually-hidden"> de {c.name}</span>
                         </button>
@@ -81,6 +85,7 @@ export default async function ContactsPage() {
                         </button>
                       )}
                     </form>
+                    )}
                   </td>
                 </PermissionGate>
               </tr>

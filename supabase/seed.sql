@@ -1,4 +1,5 @@
--- Seed LOCAL/CI e HOM: SÓ DADOS FICTÍCIOS (nenhuma pessoa, igreja, telefone ou CNPJ real).
+-- Seed LOCAL/CI apenas: SÓ DADOS FICTÍCIOS (nenhuma pessoa, igreja, telefone ou CNPJ real).
+-- HOM tem seed próprio (tarefa 18), sem esta senha documentada.
 -- CNPJs válidos mas fictícios; e-mails em @teste.invalid (domínio reservado, nunca entrega);
 -- senha de teste óbvia para todos: Teste@1234. Nunca rodar em produção.
 -- Valores distintos dos usados nos testes pgTAP (CNPJ, slug, nomes e números de instância).
@@ -30,7 +31,8 @@ from (values
   ('b2000000-0000-4000-8000-000000000001'::uuid, 'admin.b@teste.invalid', 'Admin Fictícia B'),
   ('b2000000-0000-4000-8000-000000000002'::uuid, 'coord.b@teste.invalid', 'Coordenador Fictício B'),
   ('b2000000-0000-4000-8000-000000000003'::uuid, 'mentor.b@teste.invalid', 'Mentora Fictícia B'),
-  ('c2000000-0000-4000-8000-000000000001'::uuid, 'multi@teste.invalid', 'Admin Fictício das Duas Igrejas')
+  ('c2000000-0000-4000-8000-000000000001'::uuid, 'multi@teste.invalid', 'Admin Fictício das Duas Igrejas'),
+  ('d2000000-0000-4000-8000-000000000001'::uuid, 'super@teste.invalid', 'Super Admin Fictício da Plataforma')
 ) as u(id, email, full_name);
 
 insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
@@ -40,6 +42,9 @@ select gen_random_uuid(), u.id, u.id::text, 'email',
 from auth.users u
 where u.email like '%@teste.invalid'
   and not exists (select 1 from auth.identities i where i.user_id = u.id);
+
+-- super_admin da plataforma: role global no perfil, sem membership de igreja
+update public.profiles set global_role = 'super_admin' where id = 'd2000000-0000-4000-8000-000000000001';
 
 -- ===== Memberships (perfis criados pelo trigger handle_new_user) =====
 insert into public.tenant_memberships (tenant_id, user_id, role) values

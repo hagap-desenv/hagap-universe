@@ -150,11 +150,14 @@ export async function setContactConsentAction(formData: FormData): Promise<void>
   const optIn = formData.get("consent") === "opt_in";
   const supabase = await createServerSupabase();
   const now = new Date().toISOString();
-  await supabase
-    .schema("disparador")
-    .from("contacts")
-    .update(optIn ? { opted_in_at: now, opted_out_at: null } : { opted_out_at: now })
-    .eq("id", text(formData, "contact_id"));
+  const contacts = supabase.schema("disparador").from("contacts");
+  const contactId = text(formData, "contact_id");
+  if (optIn) {
+    // Nunca reverte opt-out (SAIR/PARAR): só registra opt-in de quem não saiu
+    await contacts.update({ opted_in_at: now }).eq("id", contactId).is("opted_out_at", null);
+  } else {
+    await contacts.update({ opted_out_at: now }).eq("id", contactId);
+  }
   revalidatePath("/contatos");
 }
 
