@@ -20,7 +20,7 @@ test.describe("PAI — fundação (auth, tenant, permissões, a11y)", () => {
     await page.getByLabel("E-mail").fill(USERS.adminA);
     await page.getByLabel("Senha", { exact: true }).fill("senha-errada");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page.getByRole("alert")).toHaveText(/E-mail ou senha inválidos/);
+    await expect(page.locator(".hg-alert--error")).toHaveText(/E-mail ou senha inválidos/);
   });
 
   test("troca de igreja muda os dados", async ({ page }) => {

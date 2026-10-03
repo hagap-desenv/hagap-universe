@@ -68,7 +68,7 @@ test.describe("Disparador — app (login, isolamento, fila, QR, chave)", () => {
     await page.getByLabel("Variação 2 (obrigatória)").fill("Oi {nome}! Não esqueça do encontro.");
     await page.getByLabel("Variação 3 (obrigatória)").fill("Bom dia! Encontro hoje.");
     await page.getByRole("button", { name: "Criar grupo" }).click();
-    await expect(page.getByRole("alert")).toContainText("{nome}");
+    await expect(page.locator(".hg-alert--error")).toContainText("{nome}");
 
     await page.getByLabel("Variação 3 (obrigatória)").fill("{nome}, te esperamos no encontro!");
     await page.getByRole("button", { name: "Criar grupo" }).click();
