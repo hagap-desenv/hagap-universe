@@ -383,8 +383,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Só ambiente LOCAL/CI (supabase start): HOM/PRD definem DISPARADOR_PROVIDER nos secrets do projeto.
+# O motor não tem default — sem esta variável as EFs recusam-se a escolher provedor.
+[edge_runtime.secrets]
+DISPARADOR_PROVIDER = "fake"
 
 [analytics]
 enabled = true

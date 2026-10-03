@@ -17,9 +17,10 @@ export type ProviderFactories = {
   evolution: (env: EnvGetter) => MessagingProvider;
 };
 
-// Valor desconhecido = erro (nunca cair silenciosamente no fake em produção)
+// Sem default: ausente, vazio ou desconhecido = erro (nunca cair silenciosamente no fake)
 export function getProvider(env: EnvGetter, factories: ProviderFactories): MessagingProvider {
-  const choice = (env("DISPARADOR_PROVIDER") ?? "fake").trim().toLowerCase() || "fake";
+  const choice = (env("DISPARADOR_PROVIDER") ?? "").trim().toLowerCase();
+  if (!choice) throw new Error("DISPARADOR_PROVIDER não definido (fake|evolution)");
   if (choice === "fake") return factories.fake();
   if (choice === "evolution") return factories.evolution(env);
   throw new Error(`DISPARADOR_PROVIDER inválido: ${choice}`);
