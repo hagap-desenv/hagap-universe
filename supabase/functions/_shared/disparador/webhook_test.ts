@@ -204,7 +204,10 @@ Deno.test("webhook: chave inválida, ausente ou instância sem chave → 401 e n
   const missing = await call(handler, post(upsert(messageData()), { key: null }));
   const noHash = await call(
     handler,
-    post(upsert(messageData(), "inst-sem-chave"), { instance: "inst-sem-chave", key: "" }),
+    post(upsert(messageData(), "inst-sem-chave"), {
+      instance: "inst-sem-chave",
+      key: "qualquer-chave",
+    }),
   );
   const unknown = await call(
     handler,
