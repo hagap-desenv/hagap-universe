@@ -1,0 +1,21 @@
+{
+  "name": "hagap-universe",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
+    "dev:pai": "npm run dev -w apps/pai",
+    "build:pai": "npm run build -w apps/pai",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "db:test": "supabase test db"
+  },
+  "devDependencies": {
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
+    "supabase": "^2.119.0"
+  }
+}

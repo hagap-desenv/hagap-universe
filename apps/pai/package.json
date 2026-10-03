@@ -1,5 +1,5 @@
 {
-  "name": "pai-cuidado",
+  "name": "@hagap/pai",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "next": "16.3.7",
@@ -16,14 +15,11 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@emnapi/core": "^1.11.3",
-    "@emnapi/runtime": "^1.11.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.7",
-    "supabase": "^2.119.0",
     "typescript": "^5"
   }
 }

@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  app:
+  pai:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,10 +14,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Monorepo: instalação na raiz (lockfile único), checks por workspace.
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
+      - run: npm run lint -w apps/pai
+      - run: npm run typecheck -w apps/pai
+      - run: npm run build -w apps/pai
 
   db:
     runs-on: ubuntu-latest
