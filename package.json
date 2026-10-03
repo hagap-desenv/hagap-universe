@@ -2,7 +2,8 @@
   "name": "hagap-universe",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
@@ -11,7 +12,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "test:core": "npm run test -w packages/core"
   },
   "devDependencies": {
     "@emnapi/core": "^1.11.3",

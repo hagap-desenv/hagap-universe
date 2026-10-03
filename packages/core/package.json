@@ -1,0 +1,50 @@
+{
+  "name": "@hagap/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Base partilhada dos apps HAGAP: Supabase (SSR), sessão, tenant ativo, permissões, UI base e design tokens.",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    "./env": "./src/env.ts",
+    "./roles": "./src/roles.ts",
+    "./permissions": "./src/permissions.ts",
+    "./tenant": "./src/tenant.ts",
+    "./access": "./src/access.ts",
+    "./auth": "./src/auth.ts",
+    "./supabase/server": "./src/supabase/server.ts",
+    "./supabase/browser": "./src/supabase/browser.ts",
+    "./supabase/proxy": "./src/supabase/proxy.ts",
+    "./ui/app-shell": "./src/ui/app-shell.tsx",
+    "./ui/auth-forms": "./src/ui/auth-forms.tsx",
+    "./ui/permission-gate": "./src/ui/permission-gate.tsx",
+    "./ui/status-badge": "./src/ui/status-badge.tsx",
+    "./styles/tokens.css": "./src/styles/tokens.css",
+    "./styles/ui.css": "./src/styles/ui.css"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/permissions.test.ts src/tenant.test.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "server-only": "^0.0.1"
+  },
+  "peerDependencies": {
+    "next": "16.3.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.7",
+    "typescript": "^5"
+  }
+}
