@@ -54,7 +54,76 @@ jobs:
         with:
           version: 2.119.0
       - run: supabase db start
+      # pgTAP roda num banco só com migrations (o seed fictício é do e2e e mudaria contagens dos testes)
+      - run: supabase db reset --no-seed
       - run: supabase test db
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      # Tenant cookie sem flag Secure só aqui (e2e em http://127.0.0.1)
+      HAGAP_INSECURE_COOKIES: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+      # Supabase LOCAL (migrations + seed fictício + Edge Functions com DISPARADOR_PROVIDER=fake)
+      - run: supabase start -x studio,imgproxy,vector,logflare,supavisor,postgres-meta
+      - name: Env do Supabase local para os apps (só nomes no log)
+        run: |
+          supabase status -o env | grep -E "^[A-Z_]+=" > "$RUNNER_TEMP/sb.env"
+          cut -d= -f1 "$RUNNER_TEMP/sb.env"
+          set -a; . "$RUNNER_TEMP/sb.env"; set +a
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}" >> "$GITHUB_ENV"
+          echo "SERVICE_KEY_FOR_BUNDLE_CHECK=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build -w apps/pai
+      - run: npm run build -w apps/disparador
+      - name: Service role nunca no bundle do cliente
+        run: |
+          test -n "$SERVICE_KEY_FOR_BUNDLE_CHECK"
+          if grep -rlF "$SERVICE_KEY_FOR_BUNDLE_CHECK" apps/pai/.next/static apps/disparador/.next/static; then exit 1; fi
+          if grep -rlF "SUPABASE_SERVICE_ROLE_KEY" apps/pai/.next/static apps/disparador/.next/static; then exit 1; fi
+      - run: npx playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+      - name: Logs do Supabase (falha)
+        if: failure()
+        run: supabase status || true
+
+  docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [pai, disparador]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/${{ matrix.app }}/Dockerfile -t hagap-${{ matrix.app }}:ci .
+      - name: Container responde /api/health
+        run: |
+          docker run -d --name app -p 3000:3000 hagap-${{ matrix.app }}:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs app
+          exit 1
 
   functions:
     runs-on: ubuntu-latest

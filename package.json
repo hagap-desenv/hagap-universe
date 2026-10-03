@@ -13,11 +13,14 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "db:test": "supabase test db",
-    "test:core": "npm run test -w packages/core"
+    "test:core": "npm run test -w packages/core",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@emnapi/core": "^1.11.3",
     "@emnapi/runtime": "^1.11.3",
+    "@playwright/test": "^1.63.0",
     "supabase": "^2.119.0"
   }
 }
