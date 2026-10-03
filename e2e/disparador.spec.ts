@@ -54,6 +54,17 @@ test.describe("Disparador — app (login, isolamento, fila, QR, chave)", () => {
     await expect(page.getByTestId("connect-result")).toContainText("Conectada");
   });
 
+  test("admin cria instância só com configuração (nasce desligada)", async ({ page }) => {
+    const suffix = String(Date.now()).slice(-8);
+    await login(page, USERS.adminA);
+    await page.getByRole("link", { name: "Nova instância" }).click();
+    await page.getByLabel("Nome técnico").fill(`e2e-nova-${suffix}`);
+    await page.getByLabel("Número (formato internacional)").fill(`+55119${suffix}`);
+    await page.getByRole("button", { name: "Criar instância" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: `Instância e2e-nova-${suffix}` })).toBeVisible();
+    await expect(page.locator(".hg-badge").filter({ hasText: "Desconectada" }).first()).toBeVisible();
+  });
+
   test("mentor só consulta: sem criar instância nem ligar", async ({ page }) => {
     await login(page, USERS.mentorA);
     await expect(page.getByRole("link", { name: "Nova instância" })).toHaveCount(0);
