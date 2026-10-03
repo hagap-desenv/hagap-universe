@@ -417,3 +417,7 @@ enabled = true
 # Disparador: autenticação feita na própria função (x-cron-secret), não por JWT
 [functions.disparador-tick]
 verify_jwt = false
+
+# Disparador: autenticação pela chave da instância (x-disparador-key), não por JWT
+[functions.disparador-webhook]
+verify_jwt = false

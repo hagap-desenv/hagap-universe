@@ -2,13 +2,14 @@
 import type { RpcClient } from "./rpc.ts";
 import type { ClaimedMessage, DispatchableInstance, InstanceStatus, TickRepo } from "./tick.ts";
 import type { HeartbeatRepo } from "./tick_handler.ts";
+import type { InboundRecord, WebhookInstance, WebhookRepo } from "./webhook.ts";
 
 function firstRow(data: unknown): Record<string, unknown> | null {
   const row = Array.isArray(data) ? data[0] : data;
   return row && typeof row === "object" ? row as Record<string, unknown> : null;
 }
 
-export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo {
+export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo & WebhookRepo {
   return {
     async listDispatchableInstances(): Promise<DispatchableInstance[]> {
       const rows = (await rpc("list_dispatchable_instances")) as
@@ -37,6 +38,24 @@ export function createDisparadorRepo(rpc: RpcClient): TickRepo & HeartbeatRepo {
     },
     async touchHeartbeat(job: string, status: string, detail: Record<string, unknown>) {
       await rpc("touch_heartbeat", { p_job: job, p_status: status, p_detail: detail });
+    },
+    async findInstanceByName(name: string): Promise<WebhookInstance | null> {
+      const row = firstRow(await rpc("webhook_instance", { p_name: name }));
+      if (!row || row.instance_id == null) return null;
+      return {
+        id: String(row.instance_id),
+        webhook_key_hash: typeof row.webhook_key_hash === "string" ? row.webhook_key_hash : null,
+      };
+    },
+    async recordInbound(record: InboundRecord): Promise<boolean> {
+      const isNew = await rpc("record_inbound", {
+        p_instance_id: record.instanceId,
+        p_sender_e164: record.senderE164,
+        p_body: record.body,
+        p_provider_message_id: record.providerMessageId,
+        p_provider_ts: record.providerTs,
+      });
+      return isNew === true;
     },
   };
 }
