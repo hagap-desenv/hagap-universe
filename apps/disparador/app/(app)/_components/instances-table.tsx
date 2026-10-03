@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@hagap/core/ui/status-badge";
-import { INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
+import { formatDownSince, INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
 
 // Painel de fila por instância: estado, uso de hoje vs cap e mensagens por status
 export function InstancesTable({ instances }: { instances: readonly InstanceOverview[] }) {
@@ -31,6 +31,11 @@ export function InstancesTable({ instances }: { instances: readonly InstanceOver
               <td>{i.phone_e164}</td>
               <td>
                 <StatusBadge tone={status.tone} label={status.label} />
+                {i.down_since ? (
+                  <p className="dp-down-alert" data-testid="instance-down-alert">
+                    <span aria-hidden="true">⚠</span> Queda detectada em {formatDownSince(i.down_since)}
+                  </p>
+                ) : null}
               </td>
               <td className="dp-usage">
                 {i.sent_today} de {i.daily_cap}

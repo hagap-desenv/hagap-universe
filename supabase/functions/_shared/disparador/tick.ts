@@ -31,7 +31,7 @@ export type TickSummary = {
 
 export const SEND_TIMEOUT_MS = 10_000;
 
-type Outcome = "sent" | "failed" | "disconnected" | "idle" | "errors";
+type Outcome = "sent" | "failed" | "disconnected" | "connecting" | "idle" | "errors";
 
 // Cada instância é tratada uma única vez por tick (no máximo 1 envio); instâncias diferentes em paralelo.
 export async function runTick(
@@ -91,6 +91,8 @@ async function processInstance(
     console.error(`disparador-tick: health-check falhou (${errorLabel(error)}) em ${instance.id}`);
     return "errors";
   }
+  // connecting é transitório: não envia nem marca queda. Só close desconecta (e gera evento de queda no banco).
+  if (state === "connecting") return "connecting";
   if (state !== "open") {
     await repo.setInstanceStatus(instance.id, "disconnected");
     return "disconnected";

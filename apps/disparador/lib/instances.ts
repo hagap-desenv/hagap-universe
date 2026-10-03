@@ -15,7 +15,14 @@ export type InstanceOverview = {
   failed: number;
   deferred: number;
   has_webhook_key: boolean;
+  // Queda (evento do motor) mais recente que a última conexão; null = sem alerta
+  down_since: string | null;
 };
+
+// Data/hora da queda para o alerta (UTC explícito: o servidor não conhece o fuso do usuário)
+export function formatDownSince(iso: string): string {
+  return `${new Date(iso).toLocaleString("pt-BR", { timeZone: "UTC", dateStyle: "short", timeStyle: "short" })} UTC`;
+}
 
 // Estado da instância: tom + texto (cor nunca sozinha)
 export const INSTANCE_STATUS: Record<InstanceStatus, { tone: Tone; label: string }> = {

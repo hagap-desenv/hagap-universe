@@ -26,6 +26,10 @@ test.describe("Disparador — app (login, isolamento, fila, QR, chave)", () => {
     await expect(page.getByTestId("active-tenant")).toContainText(TENANT_B.name);
     await expect(page.getByTestId("instances-table").getByRole("link", { name: INSTANCE_B.name })).toBeVisible();
     await expect(page.getByText(INSTANCE_A.name)).toHaveCount(0);
+    // Alerta de queda visível (ícone + texto) na lista e no detalhe
+    await expect(page.getByTestId("instance-down-alert")).toContainText("Queda detectada");
+    await page.getByTestId("instances-table").getByRole("link", { name: INSTANCE_B.name }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Queda detectada" })).toBeVisible();
   });
 
   test("cookie de tenant forjado é rejeitado", async ({ page, context }) => {

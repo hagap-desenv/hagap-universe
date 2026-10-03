@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PermissionGate } from "@hagap/core/ui/permission-gate";
 import { StatusBadge } from "@hagap/core/ui/status-badge";
 import { access } from "@/lib/access";
-import { INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
+import { formatDownSince, INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ConnectPanel } from "../../_components/connect-panel";
 import { WebhookKeyPanel } from "../../_components/webhook-key-panel";
@@ -25,6 +25,12 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
   return (
     <>
       <h1>Instância {instance.name}</h1>
+      {instance.down_since ? (
+        <p className="hg-alert hg-alert--error" role="alert" data-testid="instance-down-alert">
+          <span aria-hidden="true">⚠</span> Queda detectada em {formatDownSince(instance.down_since)}: o motor
+          parou de enviar por esta instância. Ligue-a de novo por QR.
+        </p>
+      ) : null}
       <section className="hg-card" aria-labelledby="estado-titulo">
         <h2 id="estado-titulo">Estado</h2>
         <p>

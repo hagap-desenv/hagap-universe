@@ -20,3 +20,10 @@
   display: grid;
   gap: var(--hg-space-3);
 }
+
+/* Alerta de queda da instância (ícone + texto, não só cor) */
+.dp-down-alert {
+  margin: var(--hg-space-1, 0.25rem) 0 0;
+  color: var(--hg-critico-fg);
+  font-weight: 600;
+}

@@ -82,4 +82,7 @@ select disparador.enqueue_message('a3000000-0000-4000-8000-000000000001', '+5511
   p_body => 'Olá Bruno Fictício, lembrete do encontro de sábado.');
 select disparador.enqueue_message('b3000000-0000-4000-8000-000000000001', '+5592990002001', 'Carla Fictícia', 'pai',
   p_body => 'Olá Carla Fictícia, tudo bem por aí?');
+-- Alerta de queda (fictício): a instância da igreja B caiu e ainda não foi religada
+insert into disparador.instance_events (tenant_id, instance_id, kind, detail) values
+  ('b1000000-0000-4000-8000-00000000000b', 'b3000000-0000-4000-8000-000000000001', 'disconnected', '{"from":"open"}');
 select set_config('request.jwt.claims', '', false);
