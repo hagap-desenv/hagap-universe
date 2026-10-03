@@ -1,6 +1,7 @@
 // Handler da EF disparador-instance-connect: ligar instância por QR.
 // Autorização com o JWT do próprio usuário (RPC connect_target: admin da igreja da instância);
 // estado gravado como motor (service_role). Respostas nunca expõem segredos nem erros do provedor.
+import { sha256Hex } from "./auth.ts";
 import type { MessagingProvider } from "./provider.ts";
 import { createRpcClient, RpcError } from "./rpc.ts";
 import type { InstanceStatus } from "./tick.ts";
@@ -25,6 +26,14 @@ export type ConnectDeps = {
 };
 
 export const CONNECT_TIMEOUT_MS = 10_000;
+// connect provisiona com até 4 chamadas (state, create, webhook/set, connect), cada uma com 10s
+export const PROVISION_TIMEOUT_MS = 4 * CONNECT_TIMEOUT_MS + 5_000;
+
+// Chave do webhook: dk_ + 32 bytes aleatórios em hex (mesmo formato de rotate_webhook_key)
+export function generateWebhookKey(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return `dk_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,6 +56,8 @@ const STATE_TO_STATUS: Record<string, InstanceStatus> = {
 
 export function createConnectHandler(deps: ConnectDeps): (req: Request) => Promise<Response> {
   const timeoutMs = deps.timeoutMs ?? CONNECT_TIMEOUT_MS;
+  const provisionTimeoutMs = deps.timeoutMs ?? PROVISION_TIMEOUT_MS;
+  const webhookBase = (deps.webhookBaseUrl ?? "").trim().replace(/\/+$/, "");
 
   return async (req) => {
     if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -77,13 +88,29 @@ export function createConnectHandler(deps: ConnectDeps): (req: Request) => Promi
       });
     }
 
+    // Falha fechada: sem URL pública não há webhook a configurar
+    if (!webhookBase) return json(500, { error: "not_configured" });
+
+    // Chave nova a cada conexão: só o hash vai para o banco; o texto só para o provedor
+    // (nunca para log nem para a resposta ao navegador)
+    const webhookKey = generateWebhookKey();
+    const webhookUrl = `${webhookBase}/functions/v1/disparador-webhook?instance=${
+      encodeURIComponent(decision.instanceName)
+    }`;
+    try {
+      await deps.repo.setWebhookKeyHash(instanceId, await sha256Hex(webhookKey));
+    } catch (error) {
+      console.error(`disparador-instance-connect: hash não gravado (${errorLabel(error)})`);
+      return json(500, { error: "webhook_key_not_saved" });
+    }
+
     let status: InstanceStatus;
     let qrCode: string | undefined;
     try {
       const provider = deps.provider();
       const result = await withTimeout(
-        provider.connect(decision.instanceName, { webhookUrl: "", webhookKey: "" }),
-        timeoutMs,
+        provider.connect(decision.instanceName, { webhookUrl, webhookKey }),
+        provisionTimeoutMs,
       );
       if (result.qrCode) {
         status = "connecting";

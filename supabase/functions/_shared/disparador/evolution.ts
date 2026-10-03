@@ -5,6 +5,14 @@ import { TimeoutError } from "./timeout.ts";
 
 export const EVOLUTION_TIMEOUT_MS = 10_000;
 
+// Erro HTTP da Evolution: só operação e status (o corpo pode conter número, nome ou chave)
+export class EvolutionHttpError extends Error {
+  constructor(readonly op: string, readonly status: number) {
+    super(`evolution ${op}: HTTP ${status}`);
+    this.name = "EvolutionHttpError";
+  }
+}
+
 export type EvolutionOptions = {
   baseUrl: string;
   apiKey: string;
@@ -55,7 +63,33 @@ export class EvolutionProvider implements MessagingProvider {
     return { providerMessageId: id };
   }
 
-  async connect(instance: string, _opts: ConnectOptions): Promise<{ qrCode?: string }> {
+  // Provisionamento: cria a instância se não existir, (re)configura SEMPRE o webhook com a chave nova
+  // e pede o QR. Cada chamada tem timeout próprio; sem retry.
+  async connect(instance: string, opts: ConnectOptions): Promise<{ qrCode?: string }> {
+    let exists = true;
+    try {
+      await this.request("connectionState", "GET", `/instance/connectionState/${enc(instance)}`);
+    } catch (error) {
+      if (!(error instanceof EvolutionHttpError && error.status === 404)) throw error;
+      exists = false;
+    }
+    if (!exists) {
+      await this.request("create", "POST", "/instance/create", {
+        instanceName: instance,
+        integration: "WHATSAPP-BAILEYS",
+        qrcode: true,
+      });
+    }
+    await this.request("webhookSet", "POST", `/webhook/set/${enc(instance)}`, {
+      webhook: {
+        enabled: true,
+        url: opts.webhookUrl,
+        headers: { "x-disparador-key": opts.webhookKey },
+        byEvents: false,
+        base64: false,
+        events: ["MESSAGES_UPSERT"],
+      },
+    });
     const data = await this.request("connect", "GET", `/instance/connect/${enc(instance)}`);
     const qr = data.base64 ?? data.code;
     return typeof qr === "string" && qr !== "" ? { qrCode: qr } : {};
@@ -79,7 +113,7 @@ export class EvolutionProvider implements MessagingProvider {
       }
       const text = await res.text();
       // Nunca propagar o corpo de erro (pode conter número/conteúdo)
-      if (!res.ok) throw new Error(`evolution ${op}: HTTP ${res.status}`);
+      if (!res.ok) throw new EvolutionHttpError(op, res.status);
       if (text.trim() === "") return {};
       try {
         const parsed = JSON.parse(text);
