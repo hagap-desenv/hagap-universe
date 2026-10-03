@@ -52,6 +52,14 @@ check("mentor A não enfileira", m.status === 403 || m.body?.code === "42501", `
 const x = await rest(B, "disparador")("POST", "rpc/enqueue_message", enqArgs("Contato Fictício A1", "+5511900001001"));
 check("admin B não enfileira na instância da igreja A", x.status === 403 || x.body?.code === "42501", `HTTP ${x.status}`);
 
+// Execução repetível: ids e números únicos por rodada; uso diário medido por diferença
+const RUN = Date.now().toString(36);
+const usageSum = async () => {
+  const r = await rest(A, "disparador")("GET", "daily_usage?select=sent&instance_id=eq.a1000000-0000-0000-0000-00000000000a");
+  return (r.body ?? []).reduce((s, x) => s + x.sent, 0);
+};
+const usageBefore = await usageSum();
+
 // Enfileirar e esperar o cron enviar (FakeProvider)
 const e = await rest(A, "disparador")("POST", "rpc/enqueue_message", enqArgs("Contato Fictício A1", "+5511900001001"));
 check("admin A enfileira abertura com variações", e.status === 200 && typeof e.body === "string", `HTTP ${e.status}`);
@@ -64,31 +72,46 @@ for (let i = 0; i < 20 && status !== "sent"; i++) {
   if (i === 0) check("corpo renderizado com o nome", (s.body?.[0]?.body ?? "").includes("Contato Fictício A1"));
 }
 check("cron enviou a mensagem (sent + id do provedor)", status === "sent" && !!prov, `status=${status}`);
-const u = await rest(A, "disparador")("GET", "daily_usage?select=sent&instance_id=eq.a1000000-0000-0000-0000-00000000000a");
-check("uso diário contabilizado uma vez", u.body?.[0]?.sent === 1, `sent=${u.body?.[0]?.sent}`);
+const usageDelta = (await usageSum()) - usageBefore;
+check("uso diário contabilizado uma vez", usageDelta === 1, `delta=${usageDelta}`);
 
 // Webhook: rotacionar chave, receber, deduplicar, opt-out
 const k = await rest(A, "disparador")("POST", "rpc/rotate_webhook_key", { p_instance_id: "a1000000-0000-0000-0000-00000000000a" });
 const key = typeof k.body === "string" ? k.body : k.body?.key ?? k.body?.[0]?.key;
 check("admin A rotaciona a chave do webhook", k.status === 200 && !!key, `HTTP ${k.status}`);
+// Número fictício novo por rodada (+55119009xxxxx)
+const phone = "+55119009" + String(Date.now() % 100000).padStart(5, "0");
 const hook = (id, text, keyOverride) => fetch(`${U}/functions/v1/disparador-webhook?instance=hom-ficticia-a`, {
   method: "POST",
   headers: { "Content-Type": "application/json", "x-disparador-key": keyOverride ?? key },
   body: JSON.stringify({ event: "messages.upsert", instance: "hom-ficticia-a", data: {
-    key: { remoteJid: "5511900001002@s.whatsapp.net", fromMe: false, id },
+    key: { remoteJid: `${phone.slice(1)}@s.whatsapp.net`, fromMe: false, id },
     message: { conversation: text }, messageTimestamp: Math.floor(Date.now() / 1000) } }),
 });
-const w0 = await hook("HOM-E2E-BAD", "Oi", "dk_chave_errada");
+const w0 = await hook(`HOM-E2E-${RUN}-BAD`, "Oi", "dk_chave_errada");
 check("webhook recusa chave inválida", w0.status === 401, `HTTP ${w0.status}`);
-const w1 = await hook("HOM-E2E-1", "Oi, tudo bem");
-const w2 = await hook("HOM-E2E-1", "Oi, tudo bem");
+const w1 = await hook(`HOM-E2E-${RUN}-1`, "Oi, tudo bem");
+const w2 = await hook(`HOM-E2E-${RUN}-1`, "Oi, tudo bem");
 check("webhook aceita mensagem", w1.ok, `HTTP ${w1.status}`);
 check("webhook aceita reenvio duplicado sem erro", w2.ok, `HTTP ${w2.status}`);
-const inbound = await rest(A, "disparador")("GET", "inbound_messages?select=id&provider_message_id=eq.HOM-E2E-1");
+const inbound = await rest(A, "disparador")("GET", `inbound_messages?select=id&provider_message_id=eq.HOM-E2E-${RUN}-1`);
 check("resposta gravada uma única vez", inbound.body?.length === 1, `n=${inbound.body?.length}`);
-const w3 = await hook("HOM-E2E-2", "SAIR");
-const c = await rest(A, "disparador")("GET", "contacts?select=opted_out_at&phone_e164=eq.%2B5511900001002");
+
+// Opt-out: mensagem agendada para depois é cancelada pelo SAIR; novo envio é recusado (DS004)
+const later = new Date(Date.now() + 3600_000).toISOString();
+const pend = await rest(A, "disparador")("POST", "rpc/enqueue_message", {
+  ...enqArgs(`Fictício ${RUN}`, phone), p_not_before: later,
+});
+check("mensagem agendada antes do SAIR", pend.status === 200, `HTTP ${pend.status}`);
+const w3 = await hook(`HOM-E2E-${RUN}-2`, "SAIR");
+const c = await rest(A, "disparador")("GET", `contacts?select=opted_out_at&phone_e164=eq.${encodeURIComponent(phone)}`);
 check("SAIR registra opt-out", w3.ok && !!c.body?.[0]?.opted_out_at);
+const pc = await rest(A, "disparador")("GET", `outbound_messages?select=status&id=eq.${pend.body}`);
+check("SAIR cancela a mensagem pendente", pc.body?.[0]?.status === "cancelled", `status=${pc.body?.[0]?.status}`);
+const again = await rest(A, "disparador")("POST", "rpc/enqueue_message", enqArgs(`Fictício ${RUN}`, phone));
+check("novo envio para quem saiu é recusado (DS004)", again.body?.code === "DS004", `HTTP ${again.status} ${again.body?.code}`);
+const clear = await rest(A, "disparador")("PATCH", `contacts?phone_e164=eq.${encodeURIComponent(phone)}`, { opted_out_at: null });
+check("admin não desfaz o opt-out", clear.status === 403 || clear.body?.code === "42501", `HTTP ${clear.status}`);
 const inbB = await rest(B, "disparador")("GET", "inbound_messages?select=id");
 check("admin B não vê respostas da igreja A", inbB.status === 200 && inbB.body.length === 0);
 
