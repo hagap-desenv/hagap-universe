@@ -1,0 +1,100 @@
+# Evolution API (WhatsApp) do Disparador — isolada dos demais projetos do servidor.
+# - Postgres e Redis exclusivos, rede interna própria, volumes com prefixo do projeto.
+# - Nenhuma porta publicada: só a API sai pelo Traefik já existente (labels, HTTPS Let's Encrypt).
+# - Segredos só no .env do servidor (ver .env.example); nunca no repo.
+# Uso no servidor: docker compose -p hagap-evolution-hom --env-file .env up -d
+name: ${COMPOSE_PROJECT_NAME:-hagap-evolution-hom}
+
+services:
+  evolution:
+    image: evoapicloud/evolution-api:${EVOLUTION_VERSION:-v2.3.7}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SERVER_TYPE: http
+      SERVER_PORT: "8080"
+      SERVER_URL: https://${EVOLUTION_HOST}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
+      DEL_INSTANCE: "false"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${POSTGRES_PASSWORD}@postgres:5432/evolution?schema=evolution_api
+      DATABASE_CONNECTION_CLIENT_NAME: hagap_evolution
+      # LGPD: a Evolution não guarda conteúdo de conversas; o Disparador recebe tudo pelo webhook.
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "false"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: hagap_evolution
+      CACHE_REDIS_SAVE_INSTANCES: "false"
+      CACHE_LOCAL_ENABLED: "false"
+      LOG_LEVEL: ERROR,WARN
+      LOG_BAILEYS: error
+      TELEMETRY_ENABLED: "false"
+      CONFIG_SESSION_PHONE_CLIENT: Hagap
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      QRCODE_LIMIT: "30"
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - interna
+    mem_limit: 1g
+    cpus: 1.0
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${COMPOSE_PROJECT_NAME:-hagap-evolution-hom}_interna
+      traefik.http.routers.hagap-evolution-hom.rule: Host(`${EVOLUTION_HOST}`)
+      traefik.http.routers.hagap-evolution-hom.entrypoints: websecure
+      traefik.http.routers.hagap-evolution-hom.tls.certresolver: letsencrypt
+      traefik.http.services.hagap-evolution-hom.loadbalancer.server.port: "8080"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - interna
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - interna
+    mem_limit: 192m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  interna:
+
+volumes:
+  evolution_instances:
+  postgres_data:
+  redis_data:
