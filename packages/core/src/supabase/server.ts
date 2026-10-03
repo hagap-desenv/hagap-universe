@@ -6,8 +6,9 @@ import { cookies } from "next/headers";
 import { getSupabasePublicEnv } from "../env";
 
 export async function createServerSupabase() {
-  const { url, anonKey } = getSupabasePublicEnv();
+  // cookies() primeiro: no build marca a rota como dinâmica antes de exigir as env vars
   const cookieStore = await cookies();
+  const { url, anonKey } = getSupabasePublicEnv();
 
   return createServerClient(url, anonKey, {
     cookies: {

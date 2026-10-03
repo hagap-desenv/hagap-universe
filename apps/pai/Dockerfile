@@ -5,12 +5,14 @@ FROM node:22-alpine AS deps
 WORKDIR /repo
 COPY package.json package-lock.json ./
 COPY apps/pai/package.json ./apps/pai/
-RUN npm ci --workspace apps/pai --include-workspace-root --ignore-scripts
+COPY packages/core/package.json ./packages/core/
+RUN npm ci --workspace apps/pai --workspace packages/core --include-workspace-root --ignore-scripts
 
 FROM node:22-alpine AS builder
 WORKDIR /repo
 COPY --from=deps /repo/node_modules ./node_modules
 COPY package.json package-lock.json ./
+COPY packages/core ./packages/core
 COPY apps/pai ./apps/pai
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build -w apps/pai

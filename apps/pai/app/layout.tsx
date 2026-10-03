@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import "@hagap/core/styles/tokens.css";
+import "@hagap/core/styles/ui.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
