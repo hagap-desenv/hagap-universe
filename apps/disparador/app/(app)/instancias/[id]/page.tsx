@@ -6,6 +6,7 @@ import { access } from "@/lib/access";
 import { formatDownSince, INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ConnectPanel } from "../../_components/connect-panel";
+import { StatusAutoRefresh } from "../../_components/status-auto-refresh";
 import { WebhookKeyPanel } from "../../_components/webhook-key-panel";
 
 // A ação "Ligar por QR" pode levar até ~45s no 1º connect (cria instância + webhook no provedor).
@@ -28,6 +29,7 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
   return (
     <>
       <h1>Instância {instance.name}</h1>
+      <StatusAutoRefresh statuses={{ [instance.id]: instance.status }} />
       {instance.down_since ? (
         <p className="hg-alert hg-alert--error" role="alert" data-testid="instance-down-alert">
           <span aria-hidden="true">⚠</span> Queda detectada em {formatDownSince(instance.down_since)}: o motor

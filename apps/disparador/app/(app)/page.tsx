@@ -5,6 +5,7 @@ import { access } from "@/lib/access";
 import type { InstanceOverview } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { InstancesTable } from "./_components/instances-table";
+import { StatusAutoRefresh } from "./_components/status-auto-refresh";
 
 export const metadata: Metadata = { title: "Instâncias · Disparador HAGAP" };
 
@@ -38,7 +39,10 @@ export default async function InstancesPage() {
       ) : instances.length === 0 ? (
         <p data-testid="no-instances">Nenhuma instância cadastrada nesta igreja.</p>
       ) : (
-        <InstancesTable instances={instances} />
+        <>
+          <InstancesTable instances={instances} />
+          <StatusAutoRefresh statuses={Object.fromEntries(instances.map((i) => [i.id, i.status]))} />
+        </>
       )}
     </>
   );
