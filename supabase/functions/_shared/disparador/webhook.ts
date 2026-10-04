@@ -149,8 +149,28 @@ export function createWebhookHandler(deps: WebhookDeps): (req: Request) => Promi
       return json(401, { error: "unauthorized" });
     }
 
+    const event = normalizeEvent(payload.event);
+    if (event === "connection.update") {
+      // Estado após o pareamento/queda; connecting é transitório (não muda nada)
+      const state = asObject(payload.data)?.state;
+      const status: InstanceStatus | null = state === "open"
+        ? "open"
+        : state === "close"
+        ? "disconnected"
+        : null;
+      if (status) {
+        try {
+          await deps.repo.setInstanceStatus(instance.id, status);
+        } catch (error) {
+          console.error(`disparador-webhook: estado não gravado (${errorLabel(error)})`);
+          return json(500, { error: "status_failed" });
+        }
+      }
+      return json(200, { status_applied: status });
+    }
+
     const result = { received: 0, duplicates: 0, ignored: 0 };
-    if (normalizeEvent(payload.event) !== "messages.upsert") {
+    if (event !== "messages.upsert") {
       return json(200, { ...result, ignored: 1 });
     }
 

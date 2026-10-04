@@ -87,7 +87,8 @@ export class EvolutionProvider implements MessagingProvider {
         headers: { "x-disparador-key": opts.webhookKey },
         byEvents: false,
         base64: false,
-        events: ["MESSAGES_UPSERT"],
+        // Mensagens recebidas + estado da conexão (pareamento/queda atualizam o motor sozinhos)
+        events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
       },
     });
     const data = await this.request("connect", "GET", `/instance/connect/${enc(instance)}`);
