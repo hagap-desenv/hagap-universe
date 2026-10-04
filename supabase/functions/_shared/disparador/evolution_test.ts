@@ -168,7 +168,7 @@ const EXPECTED_WEBHOOK = {
     headers: { "x-disparador-key": CONNECT_OPTS.webhookKey },
     byEvents: false,
     base64: false,
-    events: ["MESSAGES_UPSERT"],
+    events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
   },
 };
 

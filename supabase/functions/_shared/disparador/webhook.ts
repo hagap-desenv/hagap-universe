@@ -1,6 +1,7 @@
 // Webhook de recebimento (Evolution messages.upsert): tenant pela instância, chave da instância,
 // dedup no banco, guarda de history-sync, @lid via senderPn, fromMe ignorado.
 import { keyMatchesHash } from "./auth.ts";
+import type { InstanceStatus } from "./tick.ts";
 import { errorLabel } from "./timeout.ts";
 
 export type WebhookInstance = { id: string; webhook_key_hash: string | null };
@@ -14,6 +15,8 @@ export type InboundRecord = {
 };
 
 export interface WebhookRepo {
+  // connection.update: open → open; close → disconnected (motor regista a queda)
+  setInstanceStatus(instanceId: string, status: InstanceStatus): Promise<void>;
   findInstanceByName(name: string): Promise<WebhookInstance | null>;
   // true = mensagem nova; false = duplicada (já processada)
   recordInbound(record: InboundRecord): Promise<boolean>;

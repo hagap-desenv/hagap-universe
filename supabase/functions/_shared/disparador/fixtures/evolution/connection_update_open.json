@@ -1,0 +1,17 @@
+{
+  "event": "connection.update",
+  "instance": "inst-a",
+  "data": {
+    "instance": "inst-a",
+    "wuid": "5511900000001@s.whatsapp.net",
+    "profileName": "Igreja Ficticia",
+    "profilePictureUrl": null,
+    "state": "open",
+    "statusReason": 200
+  },
+  "destination": "https://edge.teste.invalid/functions/v1/disparador-webhook?instance=inst-a",
+  "date_time": "2026-10-04T12:00:00.000Z",
+  "sender": "5511900000001@s.whatsapp.net",
+  "server_url": "https://evolution.teste.invalid",
+  "apikey": "APIKEY-FICTICIA-DA-INSTANCIA"
+}

@@ -1,7 +1,13 @@
 // Webhook do Disparador: dados fictícios (telefones +55119..., chaves de teste).
 import { assertEquals } from "@std/assert";
 import { sha256Hex } from "./auth.ts";
+import type { InstanceStatus } from "./tick.ts";
 import { createWebhookHandler, type InboundRecord, type WebhookInstance } from "./webhook.ts";
+import connOpen from "./fixtures/evolution/connection_update_open.json" with { type: "json" };
+import connClose from "./fixtures/evolution/connection_update_close.json" with { type: "json" };
+import connConnecting from "./fixtures/evolution/connection_update_connecting.json" with {
+  type: "json",
+};
 
 const NOW = Date.parse("2026-10-03T15:00:00Z");
 const NOW_S = Math.floor(NOW / 1000);
@@ -11,11 +17,16 @@ const KEY_B = "chave-webhook-igreja-b";
 // Repositório em memória: o UNIQUE (instance_id, provider_message_id) do banco simulado por um Set
 class MemoryRepo {
   records: InboundRecord[] = [];
+  statuses: { id: string; status: InstanceStatus }[] = [];
   private seen = new Set<string>();
   constructor(private instances: Record<string, WebhookInstance>) {}
 
   findInstanceByName(name: string): Promise<WebhookInstance | null> {
     return Promise.resolve(this.instances[name] ?? null);
+  }
+  setInstanceStatus(id: string, status: InstanceStatus): Promise<void> {
+    this.statuses.push({ id, status });
+    return Promise.resolve();
   }
   async recordInbound(record: InboundRecord): Promise<boolean> {
     await Promise.resolve();
@@ -266,7 +277,7 @@ Deno.test("webhook: outros eventos são aceites e ignorados (200)", async () => 
   const { repo, handler } = await setup();
   const res = await call(
     handler,
-    post({ event: "connection.update", instance: "inst-a", data: { state: "open" } }),
+    post({ event: "presence.update", instance: "inst-a", data: { id: "x" } }),
   );
   const upper = await call(handler, post({ ...upsert(messageData()), event: "MESSAGES_UPSERT" }));
 
@@ -291,4 +302,74 @@ Deno.test("webhook: método ≠ POST → 405; JSON inválido → 400", async () 
   );
   assertEquals(get.status, 405);
   assertEquals(bad.status, 400);
+});
+
+// ===== connection.update (Evolution v2.3.7): estado da instância atualizado após o pareamento =====
+Deno.test("webhook: connection.update open → instância open", async () => {
+  const { repo, handler } = await setup();
+  const { status, json } = await call(handler, post(connOpen));
+  assertEquals(status, 200);
+  assertEquals(json.status_applied, "open");
+  assertEquals(repo.statuses, [{ id: "inst-a-id", status: "open" }]);
+  assertEquals(repo.records.length, 0);
+});
+
+Deno.test("webhook: connection.update close → instância disconnected (evento de queda no banco)", async () => {
+  const { repo, handler } = await setup();
+  const { status, json } = await call(handler, post(connClose));
+  assertEquals(status, 200);
+  assertEquals(json.status_applied, "disconnected");
+  assertEquals(repo.statuses, [{ id: "inst-a-id", status: "disconnected" }]);
+});
+
+Deno.test("webhook: connection.update connecting é transitório → ignorado", async () => {
+  const { repo, handler } = await setup();
+  const { status, json } = await call(handler, post(connConnecting));
+  assertEquals(status, 200);
+  assertEquals(json.status_applied, null);
+  assertEquals(repo.statuses.length, 0);
+});
+
+Deno.test("webhook: CONNECTION_UPDATE (maiúsculas) também é aceite", async () => {
+  const { repo, handler } = await setup();
+  await call(handler, post({ ...connOpen, event: "CONNECTION_UPDATE" }));
+  assertEquals(repo.statuses, [{ id: "inst-a-id", status: "open" }]);
+});
+
+Deno.test("webhook: connection.update com chave inválida → 401, estado intacto", async () => {
+  const { repo, handler } = await setup();
+  const wrong = await call(handler, post(connOpen, { key: "chave-errada" }));
+  const missing = await call(handler, post(connOpen, { key: null }));
+  assertEquals([wrong.status, missing.status], [401, 401]);
+  assertEquals(repo.statuses.length, 0);
+});
+
+Deno.test("webhook: connection.update de outro tenant não muda a instância alheia", async () => {
+  const { repo, handler } = await setup();
+  // chave da igreja B tentando falar pela instância da A
+  const keyOfB = await call(handler, post(connClose, { instance: "inst-a", key: KEY_B }));
+  // payload da instância B enviado pela URL da A
+  const swapped = await call(
+    handler,
+    post({ ...connClose, instance: "inst-b" }, { instance: "inst-a", key: KEY_A }),
+  );
+  assertEquals([keyOfB.status, swapped.status], [401, 401]);
+  assertEquals(repo.statuses.length, 0);
+
+  // B pela sua própria instância: só a B muda
+  await call(
+    handler,
+    post({ ...connClose, instance: "inst-b" }, { instance: "inst-b", key: KEY_B }),
+  );
+  assertEquals(repo.statuses, [{ id: "inst-b-id", status: "disconnected" }]);
+});
+
+Deno.test("webhook: connection.update sem estado reconhecido → ignorado", async () => {
+  const { repo, handler } = await setup();
+  const { status } = await call(
+    handler,
+    post({ event: "connection.update", instance: "inst-a", data: { state: "refused" } }),
+  );
+  assertEquals(status, 200);
+  assertEquals(repo.statuses.length, 0);
 });
