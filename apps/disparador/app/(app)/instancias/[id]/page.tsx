@@ -6,6 +6,9 @@ import { access } from "@/lib/access";
 import { formatDownSince, INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ConnectPanel } from "../../_components/connect-panel";
+
+// A ação "Ligar por QR" pode levar até ~45s no 1º connect (cria instância + webhook no provedor).
+export const maxDuration = 60;
 import { WebhookKeyPanel } from "../../_components/webhook-key-panel";
 
 export const metadata: Metadata = { title: "Instância · Disparador HAGAP" };
