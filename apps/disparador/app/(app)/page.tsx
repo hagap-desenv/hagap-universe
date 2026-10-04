@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PermissionGate } from "@hagap/core/ui/permission-gate";
 import { access } from "@/lib/access";
-import type { InstanceOverview } from "@/lib/instances";
+import { type InstanceOverview, overviewSignature } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { InstancesTable } from "./_components/instances-table";
 import { StatusAutoRefresh } from "./_components/status-auto-refresh";
@@ -41,7 +41,10 @@ export default async function InstancesPage() {
       ) : (
         <>
           <InstancesTable instances={instances} />
-          <StatusAutoRefresh statuses={Object.fromEntries(instances.map((i) => [i.id, i.status]))} />
+          <StatusAutoRefresh
+            tenantId={active.tenantId}
+            signatures={Object.fromEntries(instances.map((i) => [i.id, overviewSignature(i)]))}
+          />
         </>
       )}
     </>

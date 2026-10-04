@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { PermissionGate } from "@hagap/core/ui/permission-gate";
 import { StatusBadge } from "@hagap/core/ui/status-badge";
 import { access } from "@/lib/access";
-import { formatDownSince, INSTANCE_STATUS, type InstanceOverview } from "@/lib/instances";
+import { formatDownSince, INSTANCE_STATUS, type InstanceOverview, overviewSignature } from "@/lib/instances";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ConnectPanel } from "../../_components/connect-panel";
 import { StatusAutoRefresh } from "../../_components/status-auto-refresh";
+import { TestMessageForm } from "../../_components/test-message-form";
 import { WebhookKeyPanel } from "../../_components/webhook-key-panel";
 
 // A ação "Ligar por QR" pode levar até ~45s no 1º connect (cria instância + webhook no provedor).
@@ -25,11 +26,22 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
   const instance = ((data ?? []) as InstanceOverview[]).find((i) => i.id === id);
   if (!instance) notFound();
 
+  // Grupos utilizáveis no teste: só os com 3+ variações (o motor recusa menos)
+  const { data: groupRows } = await supabase
+    .schema("disparador")
+    .from("variant_groups")
+    .select("id, name, variants(count)")
+    .eq("tenant_id", active.tenantId)
+    .order("name");
+  const groups = ((groupRows ?? []) as { id: string; name: string; variants: { count: number }[] }[])
+    .filter((g) => (g.variants?.[0]?.count ?? 0) >= 3)
+    .map(({ id: gid, name }) => ({ id: gid, name }));
+
   const status = INSTANCE_STATUS[instance.status];
   return (
     <>
       <h1>Instância {instance.name}</h1>
-      <StatusAutoRefresh statuses={{ [instance.id]: instance.status }} />
+      <StatusAutoRefresh tenantId={active.tenantId} signatures={{ [instance.id]: overviewSignature(instance) }} />
       {instance.down_since ? (
         <p className="hg-alert hg-alert--error" role="alert" data-testid="instance-down-alert">
           <span aria-hidden="true">⚠</span> Queda detectada em {formatDownSince(instance.down_since)}: o motor
@@ -78,6 +90,18 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
         <section className="hg-card" aria-labelledby="conexao-titulo">
           <h2 id="conexao-titulo">Conexão (QR)</h2>
           <ConnectPanel instanceId={instance.id} instanceName={instance.name} />
+        </section>
+        <section className="hg-card" aria-labelledby="teste-titulo">
+          <h2 id="teste-titulo">Mensagem de teste</h2>
+          <p className="hg-muted">
+            Envia uma única mensagem por esta instância, sorteando uma variação do grupo com o nome informado. Passa
+            pelas mesmas regras da fila e conta no limite diário.
+          </p>
+          {instance.status === "open" ? (
+            <TestMessageForm instanceId={instance.id} groups={groups} />
+          ) : (
+            <p className="hg-alert hg-alert--info">Conecte a instância por QR antes de enviar um teste.</p>
+          )}
         </section>
         <section className="hg-card" aria-labelledby="chave-titulo">
           <h2 id="chave-titulo">Chave do webhook</h2>

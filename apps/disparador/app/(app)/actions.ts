@@ -65,6 +65,47 @@ async function createInstance(formData: FormData): Promise<ActionState> {
   redirect(`/instancias/${data.id}`);
 }
 
+// Mensagem de teste: UMA mensagem para UM número, pelo motor (mesmas regras anti-ban da fila).
+// Não é envio manual em massa: cada envio é individual, personalizado e conta no limite diário.
+export async function sendTestMessageAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  return keepValues(formData, await sendTestMessage(formData));
+}
+
+async function sendTestMessage(formData: FormData): Promise<ActionState> {
+  await access.requirePermission("instancias.manage");
+  const name = text(formData, "name");
+  const phone = text(formData, "phone").replace(/[\s()-]/g, "");
+  const groupId = text(formData, "variant_group_id");
+
+  if (!name) return { error: "Informe o nome de quem vai receber (substitui o {nome})." };
+  if (!E164.test(phone)) return { error: "Número no formato internacional, ex.: +5511999990000." };
+  if (!groupId) return { error: "Escolha um grupo de variações." };
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.schema("disparador").rpc("enqueue_message", {
+    p_instance_id: text(formData, "instance_id"),
+    p_recipient_e164: phone,
+    p_recipient_name: name,
+    p_product: "teste",
+    p_variant_group_id: groupId,
+  });
+  if (error) {
+    const byCode: Record<string, string> = {
+      DS001: "Este mesmo texto já foi enviado a outro número nas últimas 24h (anti-broadcast). Use outro nome ou grupo.",
+      DS003: "O grupo precisa de pelo menos 3 variações com {nome}.",
+      DS004: "Este número pediu para não receber mensagens (opt-out).",
+      "42501": "Sem permissão para enviar por esta instância.",
+      "22023": "Dados inválidos para o envio.",
+    };
+    return { error: byCode[error.code] ?? "Não foi possível colocar a mensagem na fila." };
+  }
+  revalidatePath("/", "layout");
+  return {
+    message:
+      "Mensagem na fila. O envio sai em até ~2 min, respeitando a janela 06h–22h, o intervalo de 45–90s e o limite diário.",
+  };
+}
+
 export type KeyState = { error?: string; key?: string } | undefined;
 
 // Chave do webhook: devolvida uma única vez; o banco guarda só o sha256

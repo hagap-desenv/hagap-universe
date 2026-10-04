@@ -19,6 +19,10 @@ export type InstanceOverview = {
   down_since: string | null;
 };
 
+// Assinatura de estado + fila: a tela se atualiza sozinha quando ela muda (server e client usam a mesma)
+export const overviewSignature = (r: Pick<InstanceOverview, "status" | "queued" | "sending" | "sent" | "failed">) =>
+  [r.status, r.queued, r.sending, r.sent, r.failed].join("|");
+
 // Data/hora da queda para o alerta (UTC explícito: o servidor não conhece o fuso do usuário)
 export function formatDownSince(iso: string): string {
   return `${new Date(iso).toLocaleString("pt-BR", { timeZone: "UTC", dateStyle: "short", timeStyle: "short" })} UTC`;
