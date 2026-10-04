@@ -7,7 +7,7 @@ import {
 import { getProvider } from "../_shared/disparador/provider.ts";
 import { defaultProviderFactories } from "../_shared/disparador/providers.ts";
 import { createDisparadorRepo } from "../_shared/disparador/repo.ts";
-import { createRpcClient } from "../_shared/disparador/rpc.ts";
+import { createRpcClient, engineServiceKey } from "../_shared/disparador/rpc.ts";
 
 const env = (key: string) => Deno.env.get(key);
 const url = env("SUPABASE_URL") ?? "";
@@ -18,7 +18,7 @@ Deno.serve(createConnectHandler({
     anonKey: env("SUPABASE_ANON_KEY") ?? env("SUPABASE_PUBLISHABLE_KEY") ?? "",
   }),
   repo: createDisparadorRepo(
-    createRpcClient({ url, serviceKey: env("SUPABASE_SERVICE_ROLE_KEY") ?? "" }),
+    createRpcClient({ url, serviceKey: engineServiceKey(env) }),
   ),
   provider: () => getProvider(env, defaultProviderFactories),
   // URL do disparador-webhook configurada na Evolution a cada conexão (chave rotacionada)

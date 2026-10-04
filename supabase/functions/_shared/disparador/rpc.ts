@@ -19,6 +19,12 @@ export type RpcOptions = {
   bearer?: string;
 };
 
+// Chave do motor: secret key nova (`DISPARADOR_SERVICE_KEY`, independe do JWT secret legado HS256);
+// a `SUPABASE_SERVICE_ROLE_KEY` legada fica só como fallback (local/CI).
+export function engineServiceKey(get: (name: string) => string | undefined): string {
+  return get("DISPARADOR_SERVICE_KEY") || get("SUPABASE_SERVICE_ROLE_KEY") || "";
+}
+
 export function createRpcClient(options: RpcOptions): RpcClient {
   const base = options.url.replace(/\/+$/, "");
   const schema = options.schema ?? "disparador";
