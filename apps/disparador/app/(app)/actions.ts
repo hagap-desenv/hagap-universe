@@ -99,7 +99,8 @@ export async function connectInstanceAction(_state: ConnectState, formData: Form
       headers: { "Content-Type": "application/json", apikey: anonKey, Authorization: `Bearer ${token}` },
       body: JSON.stringify({ instance_id: text(formData, "instance_id") }),
       cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
+      // Maior que o limite interno da EF (45s): o 1º connect cria a instância e o webhook no provedor.
+      signal: AbortSignal.timeout(50_000),
     });
   } catch {
     return { error: "Serviço de conexão indisponível. Tente de novo em instantes." };
