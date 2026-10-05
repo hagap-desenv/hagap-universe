@@ -40,15 +40,15 @@ test.describe("Disparador — app (login, isolamento, fila, QR, chave)", () => {
     await expect(page.getByText(INSTANCE_B.name)).toHaveCount(0);
   });
 
-  test("admin gera a chave do webhook (mostrada uma vez) e liga por QR (FakeProvider)", async ({ page }) => {
+  test("admin renova a chave do webhook sem que ela apareça e liga por QR (FakeProvider)", async ({ page }) => {
     await login(page, USERS.adminA);
     await page.getByTestId("instances-table").getByRole("link", { name: INSTANCE_A.name }).click();
     await expect(page.getByRole("heading", { level: 1, name: `Instância ${INSTANCE_A.name}` })).toBeVisible();
 
-    await page.getByRole("button", { name: /Gerar chave|Rotacionar chave/ }).click();
-    await expect(page.getByTestId("webhook-key")).toHaveText(/^dk_[0-9a-f]{64}$/);
-    await page.reload();
-    await expect(page.getByTestId("webhook-key")).toHaveCount(0);
+    await page.getByRole("button", { name: "Renovar chave" }).click();
+    await expect(page.getByTestId("webhook-key-renewed")).toContainText("Chave renovada");
+    // Regra primordial: nenhuma chave de webhook é exibida na tela
+    await expect(page.getByText(/dk_[0-9a-f]{16,}/)).toHaveCount(0);
 
     await page.getByRole("button", { name: "Ligar por QR" }).click();
     await expect(page.getByTestId("connect-result")).toContainText("Conectada");

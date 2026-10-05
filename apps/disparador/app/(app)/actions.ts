@@ -106,26 +106,26 @@ async function sendTestMessage(formData: FormData): Promise<ActionState> {
   };
 }
 
-export type KeyState = { error?: string; key?: string } | undefined;
+export type KeyState = { error?: string; message?: string } | undefined;
 
-// Chave do webhook: devolvida uma única vez; o banco guarda só o sha256
-export async function rotateWebhookKeyAction(_state: KeyState, formData: FormData): Promise<KeyState> {
-  await access.requirePermission("instancias.manage");
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase
-    .schema("disparador")
-    .rpc("rotate_webhook_key", { p_instance_id: text(formData, "instance_id") });
-  if (error || typeof data !== "string") {
-    return { error: error?.code === "42501" ? "Sem permissão para esta instância." : "Não foi possível gerar a chave." };
-  }
-  revalidatePath("/", "layout");
-  return { key: data };
+// Renovar a chave do webhook: a EF de conexão gera a chave nova, grava só o hash no banco e aplica a MESMA
+// chave no provedor (Evolution) — banco e provedor nunca ficam dessincronizados. A chave NUNCA é exibida.
+export async function renewWebhookKeyAction(_state: KeyState, formData: FormData): Promise<KeyState> {
+  const result = await callConnect(formData);
+  if (result?.error) return { error: result.error };
+  return result?.status === "open"
+    ? { message: "Chave renovada e aplicada no provedor. O recebimento continua funcionando." }
+    : { message: "Chave renovada. Conclua a conexão por QR para o provedor passar a usá-la." };
 }
 
 export type ConnectState = { error?: string; status?: InstanceStatus; qrCode?: string } | undefined;
 
 // Ligar por QR: chama a EF disparador-instance-connect com o JWT do próprio usuário
 export async function connectInstanceAction(_state: ConnectState, formData: FormData): Promise<ConnectState> {
+  return callConnect(formData);
+}
+
+async function callConnect(formData: FormData): Promise<ConnectState> {
   await access.requirePermission("instancias.manage");
   const supabase = await createServerSupabase();
   const { data } = await supabase.auth.getSession();
