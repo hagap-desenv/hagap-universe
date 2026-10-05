@@ -18,6 +18,9 @@ export const TENANT_B = { id: "b1000000-0000-4000-8000-00000000000b", name: "Igr
 export const INSTANCE_A = { id: "a3000000-0000-4000-8000-000000000001", name: "seed-esperanca-01" };
 export const INSTANCE_B = { id: "b3000000-0000-4000-8000-000000000001", name: "seed-bompastor-01" };
 
+export const GROUP_A = { id: "a5000000-0000-4000-8000-000000000001", name: "Jovens (fictício)" };
+export const GROUP_B = { id: "b5000000-0000-4000-8000-000000000001", name: "Liderança (fictício)" };
+
 export async function login(page: Page, email: string) {
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);

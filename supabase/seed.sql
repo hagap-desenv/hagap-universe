@@ -74,6 +74,16 @@ insert into disparador.variants (tenant_id, group_id, template) values
   ('a1000000-0000-4000-8000-00000000000a', 'a4000000-0000-4000-8000-000000000001', 'Oi {nome}! Seja bem-vindo(a).'),
   ('a1000000-0000-4000-8000-00000000000a', 'a4000000-0000-4000-8000-000000000001', '{nome}, ficamos felizes com sua chegada!');
 
+-- Grupos de contatos (listas fictícias): 1 por igreja
+insert into disparador.contact_groups (id, tenant_id, name, description) values
+  ('a5000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-00000000000a', 'Jovens (fictício)', 'Grupo de teste'),
+  ('b5000000-0000-4000-8000-000000000001', 'b1000000-0000-4000-8000-00000000000b', 'Liderança (fictício)', 'Grupo de teste');
+insert into disparador.contact_group_members (tenant_id, group_id, contact_id)
+select c.tenant_id, g.id, c.id
+from disparador.contacts c
+join disparador.contact_groups g on g.tenant_id = c.tenant_id
+where c.source = 'seed';
+
 -- Fila: só pelo motor (enqueue_message como service_role), corpos diferentes (anti-broadcast)
 select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 select disparador.enqueue_message('a3000000-0000-4000-8000-000000000001', '+5511990001001', 'Ana Fictícia', 'pai',
