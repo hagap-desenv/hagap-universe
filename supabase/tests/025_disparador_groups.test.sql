@@ -178,18 +178,18 @@ select is_empty($$ select 1 from disparador.campaign_progress(current_setting('t
 select set_config('request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}', true);
 select results_eq(
-  $ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Fábio Grupo', '+5511979200006', true) $,
+  $$ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Fábio Grupo', '+5511979200006', true) $$,
   array[false], 'número novo vira contato (com opt-in) e membro');
 select results_eq(
-  $ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Outro Nome', '+5511979200003', true) $,
+  $$ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Outro Nome', '+5511979200003', true) $$,
   array[true], 'número já cadastrado só é vinculado');
 select results_eq(
-  $ select name, opted_out_at is not null from disparador.contacts where phone_e164 = '+5511979200003' $,
-  $ values ('Caio Grupo'::text, true) $, 'vincular não altera nome nem desfaz opt-out do contato existente');
+  $$ select name, opted_out_at is not null from disparador.contacts where phone_e164 = '+5511979200003' $$,
+  $$ values ('Caio Grupo'::text, true) $$, 'vincular não altera nome nem desfaz opt-out do contato existente');
 select set_config('request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated"}', true);
 select throws_ok(
-  $ select * from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Mentor', '+5511979200007', false) $,
+  $$ select * from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Mentor', '+5511979200007', false) $$,
   '42501', null, 'mentor não adiciona número ao grupo');
 
 -- ===== Anónimo =====
