@@ -10,10 +10,13 @@ export const USERS = {
   mentorA: "mentor.a@teste.invalid",
   adminB: "admin.b@teste.invalid",
   multi: "multi@teste.invalid",
+  adminC: "admin.c@teste.invalid",
 } as const;
 
 export const TENANT_A = { id: "a1000000-0000-4000-8000-00000000000a", name: "Igreja Fictícia Esperança", cnpj: "12.345.678/0001-95" };
 export const TENANT_B = { id: "b1000000-0000-4000-8000-00000000000b", name: "Igreja Fictícia Bom Pastor", cnpj: "98.765.432/0001-98" };
+
+export const TENANT_C = { id: "c1000000-0000-4000-8000-00000000000c", name: "Igreja Fictícia Nova Aliança", cnpj: "77.788.899/0001-83" };
 
 export const INSTANCE_A = { id: "a3000000-0000-4000-8000-000000000001", name: "seed-esperanca-01" };
 export const INSTANCE_B = { id: "b3000000-0000-4000-8000-000000000001", name: "seed-bompastor-01" };
