@@ -22,12 +22,13 @@
     "./ui/permission-gate": "./src/ui/permission-gate.tsx",
     "./ui/status-badge": "./src/ui/status-badge.tsx",
     "./styles/tokens.css": "./src/styles/tokens.css",
-    "./styles/ui.css": "./src/styles/ui.css"
+    "./styles/ui.css": "./src/styles/ui.css",
+    "./time": "./src/time.ts"
   },
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/permissions.test.ts src/tenant.test.ts"
+    "test": "node --experimental-strip-types --test src/permissions.test.ts src/tenant.test.ts src/time.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

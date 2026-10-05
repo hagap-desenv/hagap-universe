@@ -27,3 +27,30 @@
   color: var(--hg-critico-fg);
   font-weight: 600;
 }
+
+/* Popup (dialog nativo) */
+.dp-dialog {
+  width: min(56rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: var(--hg-space-5);
+  border: 1px solid var(--hg-border-subtle);
+  border-radius: var(--hg-radius);
+  background: var(--hg-surface);
+  color: var(--hg-text);
+}
+
+.dp-dialog::backdrop {
+  background: rgb(15 27 51 / 60%);
+}
+
+.dp-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--hg-space-4);
+}
+
+.dp-dialog h3 {
+  margin-top: var(--hg-space-5);
+}
