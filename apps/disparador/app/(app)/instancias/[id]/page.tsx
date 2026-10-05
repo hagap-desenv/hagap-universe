@@ -8,6 +8,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { ConnectPanel } from "../../_components/connect-panel";
 import { StatusAutoRefresh } from "../../_components/status-auto-refresh";
 import { TestMessageForm } from "../../_components/test-message-form";
+import { GroupSendForm } from "../../grupos/_components/group-send-form";
 import { WebhookKeyPanel } from "../../_components/webhook-key-panel";
 
 // A ação "Ligar por QR" pode levar até ~45s no 1º connect (cria instância + webhook no provedor).
@@ -36,6 +37,17 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
   const groups = ((groupRows ?? []) as { id: string; name: string; variants: { count: number }[] }[])
     .filter((g) => (g.variants?.[0]?.count ?? 0) >= 3)
     .map(({ id: gid, name }) => ({ id: gid, name }));
+
+  // Grupos de contatos da igreja, para enviar por esta instância
+  const { data: contactGroupRows } = await supabase
+    .schema("disparador")
+    .from("contact_groups")
+    .select("id, name, contact_group_members(count)")
+    .eq("tenant_id", active.tenantId)
+    .order("name");
+  const contactGroups = (
+    (contactGroupRows ?? []) as { id: string; name: string; contact_group_members: { count: number }[] }[]
+  ).map((g) => ({ id: g.id, name: g.name, members: g.contact_group_members?.[0]?.count ?? 0 }));
 
   const status = INSTANCE_STATUS[instance.status];
   return (
@@ -90,6 +102,25 @@ export default async function InstancePage({ params }: PageProps<"/instancias/[i
         <section className="hg-card" aria-labelledby="conexao-titulo">
           <h2 id="conexao-titulo">Conexão (QR)</h2>
           <ConnectPanel instanceId={instance.id} instanceName={instance.name} />
+        </section>
+        <section className="hg-card" aria-labelledby="grupo-envio-titulo">
+          <h2 id="grupo-envio-titulo">Enviar para um grupo de contatos</h2>
+          <p className="hg-muted">
+            Escolha quem recebe (grupo de contatos) e o modelo de mensagem. Sai por esta instância: uma mensagem
+            individual e personalizada por pessoa com opt-in, 45–90s entre envios, das 06h às 22h e até{" "}
+            {instance.daily_cap} por dia (grupos grandes saem em vários dias).
+          </p>
+          {instance.status === "open" ? (
+            <GroupSendForm
+              contactGroups={contactGroups}
+              instances={[]}
+              fixedInstanceId={instance.id}
+              variantGroups={groups}
+              timezone={active.timezone}
+            />
+          ) : (
+            <p className="hg-alert hg-alert--info">Conecte a instância por QR antes de enviar.</p>
+          )}
         </section>
         <section className="hg-card" aria-labelledby="teste-titulo">
           <h2 id="teste-titulo">Mensagem de teste</h2>

@@ -5,21 +5,35 @@ import { sendGroupAction } from "../actions";
 
 type InstanceOption = { id: string; name: string; phone: string; dailyCap: number };
 type VariantOption = { id: string; name: string };
+export type ContactGroupOption = { id: string; name: string; members: number };
 
+// Usado na página do grupo (grupo fixo, escolhe a instância) e na página da instância
+// (instância fixa, escolhe o grupo de contatos).
 export function GroupSendForm({
   groupId,
+  contactGroups,
   instances,
+  fixedInstanceId,
   variantGroups,
   timezone,
 }: {
-  groupId: string;
+  groupId?: string;
+  contactGroups?: ContactGroupOption[];
   instances: InstanceOption[];
+  fixedInstanceId?: string;
   variantGroups: VariantOption[];
   timezone: string;
 }) {
   const [state, formAction, pending] = useActionState(sendGroupAction, undefined);
 
-  if (instances.length === 0) {
+  if (!groupId && (contactGroups ?? []).length === 0) {
+    return (
+      <p className="hg-alert hg-alert--info" data-testid="group-send-no-groups">
+        Nenhum grupo de contatos ainda. Crie um em <Link href="/grupos">Grupos</Link> e adicione os celulares.
+      </p>
+    );
+  }
+  if (!fixedInstanceId && instances.length === 0) {
     return (
       <p className="hg-alert hg-alert--error" data-testid="group-send-no-instance">
         Nenhuma instância conectada. Ligue uma instância por QR em <Link href="/">Instâncias</Link> antes de enviar.
@@ -37,7 +51,8 @@ export function GroupSendForm({
   const s = state?.summary;
   return (
     <form action={formAction} className="hg-form" aria-busy={pending} data-testid="group-send-form">
-      <input type="hidden" name="group_id" value={groupId} />
+      {groupId ? <input type="hidden" name="group_id" value={groupId} /> : null}
+      {fixedInstanceId ? <input type="hidden" name="instance_id" value={fixedInstanceId} /> : null}
       {state?.error ? (
         <p className="hg-alert hg-alert--error" role="alert">
           {state.error}
@@ -54,18 +69,32 @@ export function GroupSendForm({
           </p>
         </div>
       ) : null}
+      {groupId ? null : (
+        <div className="hg-field">
+          <label htmlFor="send-group">Grupo de contatos (quem recebe)</label>
+          <select id="send-group" name="group_id" required defaultValue={state?.values?.group_id?.[0]}>
+            {(contactGroups ?? []).map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} — {g.members} {g.members === 1 ? "celular" : "celulares"}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {fixedInstanceId ? null : (
+        <div className="hg-field">
+          <label htmlFor="send-instance">Instância conectada</label>
+          <select id="send-instance" name="instance_id" required defaultValue={state?.values?.instance_id?.[0]}>
+            {instances.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name} ({i.phone}) — até {i.dailyCap}/dia
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="hg-field">
-        <label htmlFor="send-instance">Instância conectada</label>
-        <select id="send-instance" name="instance_id" required defaultValue={state?.values?.instance_id?.[0]}>
-          {instances.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.name} ({i.phone}) — até {i.dailyCap}/dia
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="hg-field">
-        <label htmlFor="send-variants">Grupo de variações (mínimo 3, com {"{nome}"})</label>
+        <label htmlFor="send-variants">Modelo de mensagem (Grupo de variações, mínimo 3, com {"{nome}"})</label>
         <select id="send-variants" name="variant_group_id" required defaultValue={state?.values?.variant_group_id?.[0]}>
           {variantGroups.map((v) => (
             <option key={v.id} value={v.id}>
