@@ -3,7 +3,7 @@
 -- são ignorados (contados), nunca abortam o lote.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(33);
 
 select has_table('disparador', 'contact_groups', 'tabela contact_groups');
 select has_table('disparador', 'contact_group_members', 'tabela contact_group_members');
@@ -173,6 +173,24 @@ select set_config('request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-0000000008b1","role":"authenticated"}', true);
 select is_empty($$ select 1 from disparador.campaign_progress(current_setting('test.campaign')::uuid) $$,
   'admin B não vê o acompanhamento da campanha da igreja A');
+
+-- ===== Popup "Adicionar número": cria contato novo ou só vincula o existente =====
+select set_config('request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}', true);
+select results_eq(
+  $ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Fábio Grupo', '+5511979200006', true) $,
+  array[false], 'número novo vira contato (com opt-in) e membro');
+select results_eq(
+  $ select existed from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Outro Nome', '+5511979200003', true) $,
+  array[true], 'número já cadastrado só é vinculado');
+select results_eq(
+  $ select name, opted_out_at is not null from disparador.contacts where phone_e164 = '+5511979200003' $,
+  $ values ('Caio Grupo'::text, true) $, 'vincular não altera nome nem desfaz opt-out do contato existente');
+select set_config('request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated"}', true);
+select throws_ok(
+  $ select * from disparador.add_group_member('68000000-0000-0000-0000-00000000000a', 'Mentor', '+5511979200007', false) $,
+  '42501', null, 'mentor não adiciona número ao grupo');
 
 -- ===== Anónimo =====
 reset role;
