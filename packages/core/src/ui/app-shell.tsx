@@ -19,6 +19,7 @@ export function AppShell({
   tenants,
   switchTenantAction,
   signOutAction,
+  homeUrl,
   children,
 }: {
   appName: string;
@@ -30,6 +31,8 @@ export function AppShell({
   tenants: readonly ShellTenant[];
   switchTenantAction: ServerAction;
   signOutAction: ServerAction;
+  /** Portal Hangap: com ele, o cabeçalho mostra "Voltar ao menu principal" em vez de "Sair" (o sair fica no portal) */
+  homeUrl?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -65,12 +68,21 @@ export function AppShell({
             </form>
           ) : null}
         </div>
-        <form action={signOutAction} className="hg-header__user">
-          {userEmail ? <span className="hg-muted">{userEmail}</span> : null}
-          <button type="submit" className="hg-button hg-button--ghost">
-            Sair
-          </button>
-        </form>
+        {homeUrl ? (
+          <div className="hg-header__user">
+            {userEmail ? <span className="hg-muted">{userEmail}</span> : null}
+            <a href={homeUrl} className="hg-button hg-button--ghost" data-testid="home-link">
+              <span aria-hidden="true">←</span> Voltar ao menu principal
+            </a>
+          </div>
+        ) : (
+          <form action={signOutAction} className="hg-header__user">
+            {userEmail ? <span className="hg-muted">{userEmail}</span> : null}
+            <button type="submit" className="hg-button hg-button--ghost">
+              Sair
+            </button>
+          </form>
+        )}
       </header>
       <div className="hg-body">
         <nav className="hg-nav" aria-label="Navegação principal">

@@ -24,6 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       tenants={ctx.memberships.map(({ tenantId, name }) => ({ tenantId, name }))}
       switchTenantAction={switchTenantAction}
       signOutAction={signOutAction}
+      homeUrl={process.env.NEXT_PUBLIC_HUB_URL || undefined}
     >
       <PermissionsProvider permissions={ctx.permissions}>{children}</PermissionsProvider>
     </AppShell>
