@@ -12,6 +12,7 @@ export type ShellTenant = { tenantId: string; name: string };
 
 export function AppShell({
   appName,
+  brand,
   nav,
   userEmail,
   active,
@@ -21,6 +22,8 @@ export function AppShell({
   children,
 }: {
   appName: string;
+  /** Marca no cabeçalho (ex.: logo); por omissão, o nome do app em texto */
+  brand?: React.ReactNode;
   nav: readonly NavItem[];
   userEmail: string | null;
   active: { tenantId: string; name: string; cnpj: string; role: AppRole } | null;
@@ -35,7 +38,7 @@ export function AppShell({
         Pular para o conteúdo
       </a>
       <header className="hg-header">
-        <p className="hg-header__brand">{appName}</p>
+        <p className="hg-header__brand">{brand ?? appName}</p>
         <div className="hg-header__tenant">
           {active ? (
             <p className="hg-header__active" data-testid="active-tenant">

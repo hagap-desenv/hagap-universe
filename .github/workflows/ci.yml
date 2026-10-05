@@ -46,6 +46,19 @@ jobs:
       - run: npm run typecheck -w apps/disparador
       - run: npm run build -w apps/disparador
 
+  hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint -w apps/hub
+      - run: npm run typecheck -w apps/hub
+      - run: npm run build -w apps/hub
+
   db:
     runs-on: ubuntu-latest
     steps:
@@ -88,12 +101,17 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build -w apps/pai
+      - name: Build do hub (URLs dos apps locais)
+        env:
+          NEXT_PUBLIC_APP_PAI_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_DISPARADOR_URL: http://127.0.0.1:3001
+        run: npm run build -w apps/hub
       - run: npm run build -w apps/disparador
       - name: Service role nunca no bundle do cliente
         run: |
           test -n "$SERVICE_KEY_FOR_BUNDLE_CHECK"
-          if grep -rlF "$SERVICE_KEY_FOR_BUNDLE_CHECK" apps/pai/.next/static apps/disparador/.next/static; then exit 1; fi
-          if grep -rlF "SUPABASE_SERVICE_ROLE_KEY" apps/pai/.next/static apps/disparador/.next/static; then exit 1; fi
+          if grep -rlF "$SERVICE_KEY_FOR_BUNDLE_CHECK" apps/pai/.next/static apps/disparador/.next/static apps/hub/.next/static; then exit 1; fi
+          if grep -rlF "SUPABASE_SERVICE_ROLE_KEY" apps/pai/.next/static apps/disparador/.next/static apps/hub/.next/static; then exit 1; fi
       - run: npx playwright test
       - if: failure()
         uses: actions/upload-artifact@v4
@@ -111,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [pai, disparador]
+        app: [pai, disparador, hub]
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f apps/${{ matrix.app }}/Dockerfile -t hagap-${{ matrix.app }}:ci .

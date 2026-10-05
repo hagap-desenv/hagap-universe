@@ -4,6 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PAI_URL = "http://127.0.0.1:3000";
 const DISPARADOR_URL = "http://127.0.0.1:3001";
+const HUB_URL = "http://127.0.0.1:3002";
 const isCI = !!process.env.CI;
 
 export default defineConfig({
@@ -25,6 +26,7 @@ export default defineConfig({
       testMatch: /disparador\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: DISPARADOR_URL },
     },
+    { name: "hub", testMatch: /hub\.spec\.ts/, use: { ...devices["Desktop Chrome"], baseURL: HUB_URL } },
   ],
   webServer: [
     {
@@ -36,6 +38,12 @@ export default defineConfig({
     {
       command: "npm run start -w apps/disparador -- -H 127.0.0.1",
       url: `${DISPARADOR_URL}/api/health`,
+      reuseExistingServer: !isCI,
+      timeout: 120_000,
+    },
+    {
+      command: "npm run start -w apps/hub -- -H 127.0.0.1",
+      url: `${HUB_URL}/api/health`,
       reuseExistingServer: !isCI,
       timeout: 120_000,
     },

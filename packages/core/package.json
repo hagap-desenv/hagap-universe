@@ -25,7 +25,8 @@
     "./styles/ui.css": "./src/styles/ui.css",
     "./time": "./src/time.ts",
     "./cookies": "./src/cookies.ts",
-    "./app-catalog": "./src/app-catalog.ts"
+    "./app-catalog": "./src/app-catalog.ts",
+    "./ui/hangap-logo": "./src/ui/hangap-logo.tsx"
   },
   "scripts": {
     "lint": "eslint",

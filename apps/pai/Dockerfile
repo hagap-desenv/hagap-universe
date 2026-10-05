@@ -7,6 +7,7 @@ COPY package.json package-lock.json ./
 # Todos os package.json dos workspaces: o lockfile único precisa deles para o npm ci
 COPY apps/pai/package.json ./apps/pai/
 COPY apps/disparador/package.json ./apps/disparador/
+COPY apps/hub/package.json ./apps/hub/
 COPY packages/core/package.json ./packages/core/
 RUN npm ci --workspace apps/pai --workspace packages/core --include-workspace-root --ignore-scripts
 

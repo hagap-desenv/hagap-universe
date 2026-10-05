@@ -1,0 +1,143 @@
+/* Hub Hangap. Base e tokens vêm de @hagap/core; aqui só a identidade da marca (azul-marinho + luz azul). */
+:root {
+  --hub-navy-950: #071633;
+  --hub-navy-800: #0b2a5b;
+  --hub-light: #38bdf8;
+  --hub-blue: #1e6bff;
+  --hub-tagline: #bfe6ff;
+}
+
+/* ===== Acesso (login, reset) ===== */
+.hub-auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--hub-navy-950);
+}
+
+@media (min-width: 56rem) {
+  .hub-auth {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+.hub-auth__brand {
+  --hg-focus: var(--hg-focus-on-dark);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: var(--hg-space-6) var(--hg-space-5);
+  background: linear-gradient(135deg, var(--hub-navy-950) 0%, var(--hub-navy-800) 100%);
+  color: #ffffff;
+  min-height: 14rem;
+}
+
+.hub-auth__waves {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hub-auth__brand-content {
+  position: relative;
+  max-width: 30rem;
+}
+
+.hub-auth__tagline {
+  margin-top: var(--hg-space-5);
+  font-size: 1.375rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.hub-auth__motto {
+  color: var(--hub-tagline);
+}
+
+.hub-auth__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--hg-space-5) var(--hg-space-4);
+  background: var(--hub-navy-950);
+}
+
+.hub-auth__card {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--hg-surface);
+  color: var(--hg-text);
+  border-radius: 12px;
+  padding: var(--hg-space-6);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 35%);
+}
+
+/* ===== Painel ===== */
+.hub-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.hub-app .hg-shell {
+  min-height: 0;
+  flex: 1;
+}
+
+.hub-grid {
+  list-style: none;
+  margin: var(--hg-space-5) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--hg-space-4);
+}
+
+.hub-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hg-space-2);
+  padding: var(--hg-space-5);
+  background: var(--hg-surface);
+  border: 1px solid var(--hg-border-subtle);
+  border-radius: 12px;
+}
+
+.hub-card h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.hub-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f7f71 0%, var(--hub-blue) 55%, #5b3fd6 100%);
+}
+
+.hub-card__open {
+  margin-top: auto;
+  align-self: flex-start;
+  text-decoration: none;
+}
+
+.hub-footer {
+  padding: var(--hg-space-4) var(--hg-space-5);
+  background: var(--hub-navy-950);
+  color: var(--hub-tagline);
+  text-align: center;
+}
+
+.hub-footer p {
+  margin: 0;
+}
