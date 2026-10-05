@@ -4,6 +4,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { sharedCookieDomain, withSharedDomain } from "./cookies";
 import type { Permissions } from "./permissions";
 import { isAppRole, type AppRole } from "./roles";
 import { createServerSupabase, type ServerSupabase } from "./supabase/server";
@@ -135,13 +136,14 @@ export function createAccess<P extends string>(options: AccessOptions<P>) {
     const access = await requireAccess();
     if (typeof tenantId !== "string" || !isMemberOf(access.memberships, tenantId)) return false;
     const cookieStore = await cookies();
-    cookieStore.set(options.cookieName, tenantId, {
+    // Com AUTH_COOKIE_DOMAIN o cookie vale nos subdomínios (cada app tem o seu nome de cookie)
+    cookieStore.set(options.cookieName, tenantId, withSharedDomain({
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "lax" as const,
       path: "/",
       secure: process.env.NODE_ENV === "production" && process.env.HAGAP_INSECURE_COOKIES !== "1",
       maxAge: 60 * 60 * 24 * 180,
-    });
+    }, sharedCookieDomain()));
     return true;
   }
 

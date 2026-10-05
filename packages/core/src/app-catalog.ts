@@ -1,4 +1,5 @@
-// A implementar (TDD): catálogo de apps do hub e visibilidade por módulo da igreja + papel.
+// Catálogo de apps do hub: cada app exige um módulo habilitado na igreja ativa (tenant_modules) e um papel.
+// super_admin da plataforma vê todos. A autorização real continua em cada app (RLS + requirePermission).
 import type { AppRole, TenantRole } from "./roles";
 
 export type AppEntry = {
@@ -11,8 +12,11 @@ export type AppEntry = {
 };
 
 export function visibleApps(
-  _catalog: readonly AppEntry[],
-  _ctx: { role: AppRole | null | undefined; modules: readonly string[] },
+  catalog: readonly AppEntry[],
+  ctx: { role: AppRole | null | undefined; modules: readonly string[] },
 ): AppEntry[] {
-  throw new Error("not implemented");
+  const { role } = ctx;
+  if (!role) return [];
+  if (role === "super_admin") return [...catalog];
+  return catalog.filter((app) => ctx.modules.includes(app.module) && app.roles.includes(role));
 }

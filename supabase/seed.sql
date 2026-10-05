@@ -7,7 +7,12 @@
 -- ===== Igrejas =====
 insert into public.tenants (id, name, cnpj, slug, timezone) values
   ('a1000000-0000-4000-8000-00000000000a', 'Igreja Fictícia Esperança', '12345678000195', 'igreja-ficticia-esperanca', 'America/Sao_Paulo'),
-  ('b1000000-0000-4000-8000-00000000000b', 'Igreja Fictícia Bom Pastor', '98765432000198', 'igreja-ficticia-bom-pastor', 'America/Manaus');
+  ('b1000000-0000-4000-8000-00000000000b', 'Igreja Fictícia Bom Pastor', '98765432000198', 'igreja-ficticia-bom-pastor', 'America/Manaus'),
+  ('c1000000-0000-4000-8000-00000000000c', 'Igreja Fictícia Nova Aliança', '77788899000183', 'igreja-ficticia-nova-alianca', 'America/Sao_Paulo');
+
+-- Apps (hub): pai e disparador ligados (trigger) nas igrejas A e B; a C só tem o Disparador
+update public.tenant_modules set enabled = false
+where tenant_id = 'c1000000-0000-4000-8000-00000000000c' and module_key in ('pai', 'cuidado');
 
 -- Módulo "cuidado" (criado ligado pelo trigger) desligado na B: o menu do PAI segue tenant_modules
 update public.tenant_modules set enabled = false
@@ -32,6 +37,7 @@ from (values
   ('b2000000-0000-4000-8000-000000000002'::uuid, 'coord.b@teste.invalid', 'Coordenador Fictício B'),
   ('b2000000-0000-4000-8000-000000000003'::uuid, 'mentor.b@teste.invalid', 'Mentora Fictícia B'),
   ('c2000000-0000-4000-8000-000000000001'::uuid, 'multi@teste.invalid', 'Admin Fictício das Duas Igrejas'),
+  ('c2000000-0000-4000-8000-000000000002'::uuid, 'admin.c@teste.invalid', 'Admin Fictícia C'),
   ('d2000000-0000-4000-8000-000000000001'::uuid, 'super@teste.invalid', 'Super Admin Fictício da Plataforma')
 ) as u(id, email, full_name);
 
@@ -55,7 +61,8 @@ insert into public.tenant_memberships (tenant_id, user_id, role) values
   ('b1000000-0000-4000-8000-00000000000b', 'b2000000-0000-4000-8000-000000000002', 'coordenador'),
   ('b1000000-0000-4000-8000-00000000000b', 'b2000000-0000-4000-8000-000000000003', 'mentor'),
   ('a1000000-0000-4000-8000-00000000000a', 'c2000000-0000-4000-8000-000000000001', 'admin'),
-  ('b1000000-0000-4000-8000-00000000000b', 'c2000000-0000-4000-8000-000000000001', 'admin');
+  ('b1000000-0000-4000-8000-00000000000b', 'c2000000-0000-4000-8000-000000000001', 'admin'),
+  ('c1000000-0000-4000-8000-00000000000c', 'c2000000-0000-4000-8000-000000000002', 'admin');
 
 -- ===== Disparador: 1 instância fake por igreja (números fictícios) =====
 insert into disparador.instances (id, tenant_id, name, phone_e164) values

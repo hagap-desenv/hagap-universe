@@ -2,6 +2,7 @@
 // Sem `server-only` aqui: o proxy roda fora do grafo de React Server Components.
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { sharedCookieDomain, withSharedDomain } from "../cookies";
 import { getSupabasePublicEnv } from "../env";
 
 export type AuthProxyOptions = {
@@ -18,6 +19,7 @@ function matches(pathname: string, prefixes: readonly string[]): boolean {
 
 export async function updateSession(request: NextRequest) {
   const { url, anonKey } = getSupabasePublicEnv();
+  const domain = sharedCookieDomain();
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(url, anonKey, {
@@ -29,7 +31,7 @@ export async function updateSession(request: NextRequest) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
         response = NextResponse.next({ request });
         for (const { name, value, options } of cookiesToSet) {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, withSharedDomain(options ?? {}, domain));
         }
       },
     },

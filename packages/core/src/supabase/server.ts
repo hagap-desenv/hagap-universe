@@ -3,12 +3,14 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sharedCookieDomain, withSharedDomain } from "../cookies";
 import { getSupabasePublicEnv } from "../env";
 
 export async function createServerSupabase() {
   // cookies() primeiro: no build marca a rota como dinâmica antes de exigir as env vars
   const cookieStore = await cookies();
   const { url, anonKey } = getSupabasePublicEnv();
+  const domain = sharedCookieDomain();
 
   return createServerClient(url, anonKey, {
     cookies: {
@@ -18,7 +20,7 @@ export async function createServerSupabase() {
       setAll(cookiesToSet) {
         try {
           for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, withSharedDomain(options ?? {}, domain));
           }
         } catch {
           // Server Component não grava cookies; o proxy renova a sessão a cada request.

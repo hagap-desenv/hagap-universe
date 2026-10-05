@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { sharedCookieDomain, withSharedDomain } from "./cookies";
 import { createServerSupabase } from "./supabase/server";
 import { safeRedirectPath } from "./tenant";
 
@@ -28,7 +29,8 @@ export async function signOut(cookieNamesToClear: readonly string[] = []): Promi
   const supabase = await createServerSupabase();
   await supabase.auth.signOut();
   const cookieStore = await cookies();
-  for (const name of cookieNamesToClear) cookieStore.delete(name);
+  const domain = sharedCookieDomain();
+  for (const name of cookieNamesToClear) cookieStore.delete(withSharedDomain({ name, path: "/" }, domain));
   redirect("/login");
 }
 
