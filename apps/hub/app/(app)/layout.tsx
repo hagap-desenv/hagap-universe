@@ -1,6 +1,7 @@
 import { HangapLogo } from "@hagap/core/ui/hangap-logo";
 import { AppShell, NoTenant } from "@hagap/core/ui/app-shell";
 import { access } from "@/lib/access";
+import { Starfield } from "../_components/starfield";
 import { BRAND_LOGO_SRC, BRAND_MOTTO } from "@/lib/brand";
 import { signOutAction, switchTenantAction } from "./actions";
 
@@ -10,9 +11,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="hub-app">
+      <Starfield />
       <AppShell
         appName="Hangap"
-        brand={<HangapLogo size={32} tone="dark" src={BRAND_LOGO_SRC} />}
+        brand={<HangapLogo size={32} tone="light" src={BRAND_LOGO_SRC} />}
         nav={[{ href: "/", label: "Apps" }]}
         userEmail={ctx.user.email}
         active={ctx.active}
