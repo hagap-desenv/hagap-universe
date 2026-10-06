@@ -17,7 +17,7 @@ const REVEAL_FROM = 0.4;
 /** Duração do "pular": do ponto atual até o login completo */
 const SKIP_SECONDS = 0.7;
 /** Opacidade do vídeo no fundo, com o login em destaque */
-const BACKDROP_LEVEL = 0.35;
+const BACKDROP_LEVEL = 0.6;
 /** Sem o vídeo começar nesse tempo (autoplay bloqueado, erro de rede), mostra o login */
 const STALL_MS = 2500;
 

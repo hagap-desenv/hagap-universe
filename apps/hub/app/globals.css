@@ -195,9 +195,9 @@ a:hover {
   opacity: var(--reveal);
   background: radial-gradient(
     ellipse at 70% 50%,
-    rgb(5 9 20 / 25%) 0%,
-    rgb(5 9 20 / 70%) 60%,
-    rgb(5 9 20 / 92%) 100%
+    rgb(5 9 20 / 10%) 0%,
+    rgb(5 9 20 / 45%) 60%,
+    rgb(5 9 20 / 75%) 100%
   );
 }
 
