@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const next = safeRedirectPath(typeof params.next === "string" ? params.next : undefined);
   const notice = params.erro === "link" ? "O link expirou ou é inválido. Peça um novo." : undefined;
   return (
-    <BrandLayout title="Entrar" intro="Acesse os apps da sua igreja com seu e-mail e senha.">
+    <BrandLayout title="Entrar" intro="Acesse os apps da sua igreja com seu e-mail e senha." withIntro>
       <LoginForm action={loginAction} next={next} notice={notice} />
     </BrandLayout>
   );

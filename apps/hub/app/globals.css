@@ -1,143 +1,1098 @@
-/* Hub Hangap. Base e tokens vêm de @hagap/core; aqui só a identidade da marca (azul-marinho + luz azul). */
+/* Hub Hangap: tema "universo" (espaço azul-marinho + degradê da marca turquesa → azul → violeta).
+   Base e tokens vêm de @hagap/core; aqui os tokens são trocados para o tema escuro do hub.
+   Contrastes de texto ≥ 4.5:1 sobre o fundo escuro (WCAG 2.1 AA). */
 :root {
-  --hub-navy-950: #071633;
-  --hub-navy-800: #0b2a5b;
-  --hub-light: #38bdf8;
-  --hub-blue: #1e6bff;
-  --hub-tagline: #bfe6ff;
+  color-scheme: dark;
+
+  --hub-space-0: #050914;
+  --hub-space-1: #070d1f;
+  --hub-space-2: #0f1f45;
+  --hub-surface: #0a1328;
+  --hub-line: #22335c;
+  --hub-line-strong: #3a4e7a;
+  --hub-line-soft: rgb(95 216 255 / 14%);
+  --hub-text: #eaf0fa;
+  --hub-soft: #c9d4e8;
+  --hub-muted: #a9b6ce;
+  --hub-cyan: #19e3c7;
+  --hub-blue: #1e88ff;
+  --hub-violet: #7c5cff;
+  --hub-sky: #5fd8ff;
+  --hub-ghost: #b8a8ff;
+  --hub-display: var(--hub-font-display), var(--hg-font);
+
+  --hg-bg: var(--hub-space-0);
+  --hg-surface: var(--hub-surface);
+  --hg-text: var(--hub-text);
+  --hg-text-muted: var(--hub-muted);
+  --hg-border: #5f7299;
+  --hg-border-subtle: var(--hub-line);
+  --hg-link: #7cdfff;
+  --hg-focus: #ffd166;
 }
 
-/* ===== Acesso (login, reset) ===== */
+body {
+  background: radial-gradient(ellipse at 70% 0%, var(--hub-space-2) 0%, var(--hub-space-1) 45%, var(--hub-space-0) 100%)
+    fixed var(--hub-space-0);
+}
+
+h1,
+h2 {
+  font-family: var(--hub-display);
+}
+
+/* Wordmark do logo recriado em SVG usa a fonte da marca */
+svg text {
+  font-family: var(--hub-font-brand), "Nunito", system-ui, sans-serif;
+}
+
+a:hover {
+  color: #a8ecff;
+}
+
+.hg-skip-link {
+  color: var(--hub-text);
+}
+
+@property --hub-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ===== Céu estrelado ===== */
+.hub-sky {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hub-sky__stars {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.hub-sky__stars--a {
+  box-shadow:
+    4vw 8vh #fff, 12vw 32vh #cfe3ff, 19vw 74vh #fff, 27vw 15vh #fff, 33vw 56vh #bcd4ff, 41vw 88vh #fff,
+    48vw 22vh #fff, 55vw 67vh #d6e6ff, 62vw 9vh #fff, 69vw 42vh #fff, 76vw 81vh #cfe3ff, 83vw 27vh #fff,
+    90vw 61vh #fff, 96vw 12vh #d6e6ff, 8vw 52vh #fff, 23vw 93vh #fff, 58vw 47vh #fff, 73vw 4vh #fff,
+    87vw 94vh #cfe3ff, 15vw 4vh #fff;
+  animation: hub-twinkle 4s ease-in-out infinite;
+}
+
+.hub-sky__stars--b {
+  width: 2px;
+  height: 2px;
+  box-shadow:
+    7vw 21vh #fff, 17vw 61vh #a8ecff, 29vw 38vh #fff, 38vw 6vh #e6dcff, 46vw 79vh #fff, 53vw 35vh #a8ecff,
+    64vw 92vh #fff, 71vw 18vh #fff, 79vw 55vh #e6dcff, 92vw 37vh #fff, 3vw 85vh #fff, 35vw 71vh #fff;
+  animation: hub-twinkle 6s ease-in-out 1.5s infinite;
+}
+
+.hub-sky__stars--c {
+  width: 3px;
+  height: 3px;
+  box-shadow: 21vw 26vh #fff, 44vw 58vh #a8ecff, 67vw 29vh #fff, 86vw 76vh #e6dcff, 11vw 44vh #fff;
+  filter: drop-shadow(0 0 4px #a8ecff);
+  animation: hub-twinkle 3s ease-in-out 0.7s infinite;
+}
+
+.hub-sky__nebula {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: hub-drift 26s ease-in-out infinite alternate;
+}
+
+.hub-sky__nebula--violet {
+  right: 4%;
+  top: 6%;
+  width: 44rem;
+  height: 44rem;
+  background: radial-gradient(circle, rgb(124 92 255 / 26%), rgb(124 92 255 / 0%) 70%);
+}
+
+.hub-sky__nebula--teal {
+  left: -12%;
+  bottom: -18%;
+  width: 48rem;
+  height: 48rem;
+  background: radial-gradient(circle, rgb(25 227 199 / 16%), rgb(30 136 255 / 0%) 70%);
+  animation-delay: -12s;
+}
+
+.hub-sky__comet {
+  position: absolute;
+  right: 6%;
+  top: 10%;
+  width: 160px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #ffffff, rgb(168 236 255 / 0%));
+  opacity: 0;
+  animation: hub-comet 9s ease-in infinite;
+}
+
+.hub-sky__comet--late {
+  right: 30%;
+  top: 2%;
+  animation-delay: -4.5s;
+  animation-duration: 13s;
+}
+
+/* ===== Acesso (login, reset): vídeo do sistema solar + login ===== */
 .hub-auth {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr;
-  background: var(--hub-navy-950);
 }
 
-@media (min-width: 56rem) {
-  .hub-auth {
-    grid-template-columns: 1.1fr 1fr;
-  }
+.hub-space {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hub-space__backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hub-space__backdrop .hub-sky {
+  position: absolute;
+}
+
+.hub-space__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(calc(1 + var(--reveal) * 0.04));
+  filter: blur(calc(var(--reveal) * 1.5px));
+}
+
+.hub-space__video--a {
+  opacity: calc(var(--video-a) * var(--level));
+}
+
+.hub-space__video--b {
+  opacity: calc(var(--video-b) * var(--level));
+}
+
+.hub-space__scrim {
+  position: absolute;
+  inset: 0;
+  opacity: var(--reveal);
+  background: radial-gradient(
+    ellipse at 70% 50%,
+    rgb(5 9 20 / 25%) 0%,
+    rgb(5 9 20 / 70%) 60%,
+    rgb(5 9 20 / 92%) 100%
+  );
+}
+
+/* Durante a intro, o vídeo inteiro é um botão invisível: clicar pula para o login */
+.hub-space__skip {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hub-space__skip:focus-visible {
+  outline-offset: -8px;
+}
+
+.hub-space__content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  opacity: var(--reveal);
+  transform: translateY(calc((1 - var(--reveal)) * 24px));
+}
+
+.hub-space--intro .hub-space__content {
+  pointer-events: none;
+}
+
+.hub-auth__layout {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5rem;
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
 }
 
 .hub-auth__brand {
   --hg-focus: var(--hg-focus-on-dark);
-  position: relative;
-  overflow: hidden;
+  flex: 1 1 28rem;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  padding: var(--hg-space-6) var(--hg-space-5);
-  background: linear-gradient(135deg, var(--hub-navy-950) 0%, var(--hub-navy-800) 100%);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
   color: #ffffff;
-  min-height: 14rem;
-}
-
-.hub-auth__waves {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.hub-auth__brand-content {
-  position: relative;
-  max-width: 30rem;
 }
 
 .hub-auth__tagline {
-  margin-top: var(--hg-space-5);
-  font-size: 1.375rem;
-  line-height: 1.35;
+  margin: 1rem 0 0;
+  font-family: var(--hub-display);
+  font-size: clamp(1.75rem, 1rem + 2.6vw, 2.875rem);
   font-weight: 600;
-  color: #ffffff;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-shadow: 0 4px 30px rgb(5 9 20 / 80%);
 }
 
 .hub-auth__motto {
-  color: var(--hub-tagline);
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--hub-soft);
+  text-shadow: 0 2px 16px rgb(5 9 20 / 80%);
 }
 
 .hub-auth__panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--hg-space-5) var(--hg-space-4);
-  background: var(--hub-navy-950);
+  flex: 0 1 27rem;
+  min-width: 0;
+}
+
+/* Cartão com borda de luz girando no degradê da marca */
+.hub-glow-card {
+  border-radius: 24px;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--hub-angle),
+    rgb(25 227 199 / 0%) 0deg,
+    var(--hub-cyan) 60deg,
+    var(--hub-blue) 120deg,
+    var(--hub-violet) 180deg,
+    rgb(124 92 255 / 0%) 240deg,
+    rgb(25 227 199 / 0%) 360deg
+  );
+  box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
+  animation: hub-angle 6s linear infinite;
 }
 
 .hub-auth__card {
-  width: 100%;
-  max-width: 26rem;
-  background: var(--hg-surface);
-  color: var(--hg-text);
-  border-radius: 12px;
-  padding: var(--hg-space-6);
-  box-shadow: 0 20px 50px rgb(0 0 0 / 35%);
+  border-radius: 23px;
+  padding: 2.25rem 2rem;
+  background: rgb(9 16 36 / 92%);
+  backdrop-filter: blur(14px);
+  color: var(--hub-text);
 }
 
-/* ===== Painel ===== */
+.hub-auth__card .hg-auth__title {
+  margin-bottom: 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.hub-auth__card .hg-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--hub-soft);
+}
+
+.hub-auth__card input {
+  height: 3.125rem;
+  padding: 0 1rem;
+  border-radius: 14px;
+  background: #060c1d;
+  border: 1px solid var(--hub-line-strong);
+  color: var(--hub-text);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.hub-auth__card input:focus-visible {
+  outline: 2px solid var(--hub-cyan);
+  outline-offset: 1px;
+  border-color: var(--hub-cyan);
+  box-shadow: 0 0 0 6px rgb(25 227 199 / 18%);
+}
+
+.hub-auth__card .hg-button {
+  position: relative;
+  overflow: hidden;
+  min-height: 3.375rem;
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(100deg, var(--hub-cyan), var(--hub-blue));
+  color: #031025;
+  font-family: var(--hub-display);
+  font-size: 1rem;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.hub-auth__card .hg-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0%), rgb(255 255 255 / 55%), rgb(255 255 255 / 0%));
+  transform: translateX(-120%) skewX(-20deg);
+}
+
+.hub-auth__card .hg-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgb(30 136 255 / 45%);
+}
+
+.hub-auth__card .hg-button:hover:not(:disabled)::after {
+  animation: hub-shine 0.9s ease;
+}
+
+.hub-auth__card .hg-form__aside {
+  text-align: center;
+}
+
+.hub-auth__footer {
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--hub-muted);
+}
+
+.hub-auth__footer p {
+  margin: 0;
+}
+
+/* Alertas no tema escuro */
+.hg-alert {
+  border: 1px solid;
+  border-left-width: 4px;
+  border-radius: 12px;
+}
+
+.hg-alert--error {
+  background: rgb(255 107 107 / 12%);
+  color: #ffc9c2;
+  border-color: rgb(255 138 128 / 55%);
+}
+
+.hg-alert--info {
+  background: rgb(95 216 255 / 10%);
+  color: #d6f4ff;
+  border-color: rgb(95 216 255 / 45%);
+}
+
+.hg-alert--success {
+  background: rgb(25 227 199 / 10%);
+  color: #c9fff4;
+  border-color: rgb(25 227 199 / 45%);
+}
+
+/* Botão secundário em pílula (rever intro, fechar) */
+.hub-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  background: rgb(5 9 20 / 40%);
+  color: var(--hub-soft);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.hub-pill:hover {
+  background: rgb(255 255 255 / 14%);
+  color: #ffffff;
+}
+
+/* Sem igreja vinculada (tela do core) no tema escuro */
+.hg-auth {
+  background: transparent;
+}
+
+.hg-auth__card {
+  border: 1px solid var(--hub-line);
+  border-radius: 20px;
+}
+
+.hg-auth__brand {
+  color: var(--hub-text);
+}
+
+/* ===== Painel (app) ===== */
 .hub-app {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .hub-app .hg-shell {
+  position: relative;
+  z-index: 1;
   min-height: 0;
   flex: 1;
 }
 
-.hub-grid {
-  list-style: none;
-  margin: var(--hg-space-5) 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: var(--hg-space-4);
+.hub-app .hg-header {
+  padding: 0.75rem 1.75rem;
+  background: rgb(5 9 20 / 72%);
+  border-bottom: 1px solid var(--hub-line-soft);
+  backdrop-filter: blur(10px);
 }
 
-.hub-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--hg-space-2);
-  padding: var(--hg-space-5);
-  background: var(--hg-surface);
-  border: 1px solid var(--hg-border-subtle);
-  border-radius: 12px;
+.hub-app .hg-header__brand,
+.hub-app .hg-header__active strong {
+  color: var(--hub-text);
 }
 
-.hub-card h2 {
-  margin: 0;
-  font-size: 1.25rem;
+.hub-app select {
+  min-height: 44px;
+  border-radius: 10px;
+  background: var(--hub-surface);
+  border-color: var(--hub-line-strong);
 }
 
-.hub-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 12px;
-  color: #ffffff;
-  background: linear-gradient(135deg, #0f7f71 0%, var(--hub-blue) 55%, #5b3fd6 100%);
-}
-
-.hub-card__open {
-  margin-top: auto;
-  align-self: flex-start;
+.hub-app .hg-button--secondary,
+.hub-app .hg-button--ghost {
+  min-height: 44px;
+  border: 1px solid #2a3e6b;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--hub-soft);
   text-decoration: none;
 }
 
+.hub-app .hg-button--secondary:hover,
+.hub-app .hg-button--ghost:hover {
+  background: #13203f;
+  color: var(--hub-text);
+}
+
+.hub-app .hg-body {
+  flex-direction: column;
+}
+
+.hub-app .hg-nav {
+  width: auto;
+  padding: 0.75rem 1.75rem 0;
+  background: transparent;
+}
+
+.hub-app .hg-nav__list {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hub-app .hg-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 10px;
+  color: var(--hub-soft);
+}
+
+.hub-app .hg-nav__link:hover {
+  background: #13203f;
+}
+
+.hub-app .hg-nav__link[aria-current="page"] {
+  background: rgb(95 216 255 / 10%);
+  color: #a8ecff;
+  box-shadow: none;
+}
+
+.hub-app .hg-main {
+  width: 100%;
+  max-width: 85rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
 .hub-footer {
+  position: relative;
+  z-index: 1;
   padding: var(--hg-space-4) var(--hg-space-5);
-  background: var(--hub-navy-950);
-  color: var(--hub-tagline);
+  border-top: 1px solid rgb(95 216 255 / 8%);
+  color: var(--hub-muted);
+  font-size: 0.875rem;
   text-align: center;
 }
 
 .hub-footer p {
   margin: 0;
+}
+
+/* ===== Página inicial: sistema solar ===== */
+.hub-home__grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.hub-home__intro {
+  flex: 0 1 22.5rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hub-greeting h1 {
+  margin-bottom: 0.625rem;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hub-greeting p {
+  margin: 0;
+}
+
+.hub-eyebrow {
+  margin: 0 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hub-cyan);
+}
+
+.hub-greeting .hub-eyebrow {
+  margin-bottom: 0.625rem;
+}
+
+.hub-panel {
+  margin: 0;
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: rgb(10 19 40 / 88%);
+  border: 1px solid var(--hub-line);
+  animation: hub-rise 0.35s ease both;
+}
+
+.hub-panel h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.hub-panel p {
+  margin: 0;
+}
+
+.hub-panel--hint {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  border-style: dashed;
+  border-color: #2a3e6b;
+  color: var(--hub-muted);
+  font-size: 0.9375rem;
+}
+
+.hub-panel--hint svg {
+  flex: none;
+  color: var(--hub-sky);
+}
+
+.hub-panel--app {
+  border-color: color-mix(in srgb, var(--planet-base) 50%, transparent);
+  box-shadow: 0 0 50px color-mix(in srgb, var(--planet-base) 12%, transparent);
+}
+
+.hub-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.125rem;
+}
+
+.hub-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.hub-open {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.125rem;
+  border-radius: 12px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--planet-light) 35%, var(--planet-base)), var(--planet-base));
+  color: var(--planet-ink);
+  font-family: var(--hub-display);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.hub-open:hover {
+  color: var(--planet-ink);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px var(--planet-glow);
+}
+
+/* Esfera do app (painel e faixa de acesso rápido) */
+.hub-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 3.125rem;
+  height: 3.125rem;
+  border-radius: 50%;
+  color: var(--planet-ink);
+  background: radial-gradient(circle at 30% 28%, var(--planet-light), var(--planet-base) 45%, var(--planet-dark) 85%);
+  box-shadow: 0 0 20px var(--planet-glow);
+}
+
+.hub-orb--md {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
+.hub-orb--ghost {
+  background: none;
+  border: 1.5px dashed rgb(168 150 255 / 60%);
+  color: var(--hub-ghost);
+  box-shadow: none;
+}
+
+/* Palco: plano das órbitas visto em perspectiva (elipses); a posição dos planetas vem do script */
+.hub-stage {
+  position: relative;
+  flex: 1 1 45rem;
+  min-width: 0;
+  max-width: 56rem;
+  height: 34rem;
+}
+
+.hub-stage__plane {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 75rem) {
+  .hub-stage__plane {
+    transform: scale(0.85);
+  }
+}
+
+.hub-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1.5px solid color-mix(in srgb, var(--planet-base, var(--hub-sky)) 45%, transparent);
+  box-shadow:
+    0 0 30px color-mix(in srgb, var(--planet-base, var(--hub-sky)) 15%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--planet-base, var(--hub-sky)) 8%, transparent);
+}
+
+.hub-ring--ghost {
+  border: 1px dashed rgb(124 92 255 / 45%);
+  box-shadow: none;
+}
+
+.hub-sun-halo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 200px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgb(30 136 255 / 28%), rgb(30 136 255 / 0%) 70%);
+}
+
+/* Ponto da órbita: o planeta fica centrado nele (z-index 1 = atrás do sol, 3 = na frente) */
+.hub-orbit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  will-change: transform;
+}
+
+.hub-planet {
+  position: absolute;
+  left: -2.625rem;
+  top: -2.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.25rem;
+  height: 5.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--planet-ink);
+  background: radial-gradient(circle at 30% 28%, var(--planet-light), var(--planet-base) 45%, var(--planet-dark) 85%);
+  box-shadow:
+    0 0 40px var(--planet-glow),
+    inset -10px -12px 20px rgb(0 0 0 / 35%);
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.hub-planet:hover {
+  transform: scale(1.12);
+}
+
+.hub-planet:focus-visible {
+  outline: 3px solid var(--hg-focus);
+  outline-offset: 6px;
+}
+
+.hub-planet[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 3px var(--hub-text),
+    0 0 0 9px rgb(95 216 255 / 28%),
+    0 0 60px var(--planet-glow);
+}
+
+.hub-planet__label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgb(5 9 20 / 88%);
+  border: 1px solid color-mix(in srgb, var(--planet-base) 45%, transparent);
+  color: var(--hub-text);
+  font-family: var(--hub-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.hub-planet--ghost {
+  left: -1.625rem;
+  top: -1.625rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  background: rgb(124 92 255 / 8%);
+  border: 1.5px dashed rgb(168 150 255 / 70%);
+  color: var(--hub-ghost);
+  box-shadow: none;
+  cursor: default;
+}
+
+.hub-planet--ghost:hover {
+  transform: none;
+}
+
+.hub-planet--ghost .hub-planet__label {
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--hub-ghost);
+}
+
+/* Sol = igreja ativa */
+.hub-sun {
+  position: absolute;
+  left: -84px;
+  top: -84px;
+  z-index: 2;
+  width: 168px;
+  height: 168px;
+  pointer-events: none;
+}
+
+.hub-sun__corona {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgb(95 216 255 / 50%);
+  animation: hub-pulse 3.6s ease-out infinite;
+}
+
+.hub-sun__corona--late {
+  animation-delay: -1.8s;
+}
+
+.hub-sun__body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 18px;
+  border-radius: 50%;
+  text-align: center;
+  color: #04122b;
+  background: radial-gradient(circle at 35% 28%, #f2fdff, #6fddff 30%, #1e88ff 62%, #5b3fe0 100%);
+  box-shadow:
+    0 0 70px rgb(30 136 255 / 70%),
+    0 0 160px rgb(124 92 255 / 35%),
+    inset -14px -18px 30px rgb(20 10 80 / 35%);
+}
+
+.hub-sun__kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hub-sun__name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: var(--hub-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Faixa "Acesso rápido": apps fixos para abrir direto */
+.hub-dock {
+  max-width: 70rem;
+  margin: 1rem auto 0;
+  padding: 1.125rem 1.25rem;
+  border-radius: 24px;
+  background: rgb(8 15 33 / 75%);
+  border: 1px solid var(--hub-line-soft);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 35%);
+}
+
+.hub-dock__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.hub-dock__head h2 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--hub-soft);
+}
+
+.hub-dock__head p {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.hub-dock__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.hub-tile {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 4.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  background: rgb(12 22 46 / 95%);
+  border: 1px solid color-mix(in srgb, var(--planet-base, var(--hub-sky)) 40%, transparent);
+  color: var(--hub-text);
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+a.hub-tile:hover {
+  color: var(--hub-text);
+  background: rgb(18 30 60 / 98%);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 34px var(--planet-glow);
+}
+
+.hub-tile[data-selected] {
+  box-shadow:
+    0 0 0 2px var(--hub-text),
+    0 0 30px var(--planet-glow);
+}
+
+.hub-tile .hub-arrow {
+  flex: none;
+  margin-left: auto;
+  color: var(--planet-base);
+}
+
+.hub-tile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hub-tile__name {
+  font-family: var(--hub-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.hub-tile__desc {
+  font-size: 0.8125rem;
+  color: var(--hub-muted);
+}
+
+.hub-tile--ghost {
+  background: transparent;
+  border: 1.5px dashed rgb(168 150 255 / 45%);
+  color: var(--hub-ghost);
+}
+
+.hub-tile--ghost .hub-tile__desc {
+  color: #b3a9e6;
+}
+
+/* Celular: o sistema solar sai, a faixa de acesso rápido vira a navegação */
+@media (max-width: 60rem) {
+  .hub-stage {
+    display: none;
+  }
+
+  .hub-home__intro {
+    flex-basis: 100%;
+  }
+
+  .hub-dock {
+    margin-top: 1.5rem;
+  }
+}
+
+/* ===== Animações ===== */
+@keyframes hub-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes hub-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(60px, -40px) scale(1.15);
+  }
+}
+
+@keyframes hub-comet {
+  0% {
+    transform: translate(0, 0) rotate(-28deg);
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  12%,
+  100% {
+    transform: translate(-720px, 380px) rotate(-28deg);
+    opacity: 0;
+  }
+}
+
+@keyframes hub-angle {
+  to {
+    --hub-angle: 360deg;
+  }
+}
+
+@keyframes hub-shine {
+  from {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-20deg);
+  }
+}
+
+@keyframes hub-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes hub-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
